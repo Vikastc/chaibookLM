@@ -1,0 +1,26 @@
+{
+  "name": "chaibooklm",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.2.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.11"
+  }
+}
