@@ -1,8 +1,12 @@
+import { toNodeHandler } from "better-auth/node";
 import "dotenv/config";
 import express from "express";
+import { auth } from "./lib/auth.js";
 
 const app = express();
 const port = process.env.PORT ?? 8080;
+
+app.all("/api/auth/{*any}", toNodeHandler(auth));
 
 app.use(express.json());
 
