@@ -14,7 +14,7 @@ import {
   workspaceIdParamSchema,
 } from "../validators/workspaceValidator.js";
 
-function parseWorkspaceId(params: Request["params"]) {
+export function parseWorkspaceId(params: Request["params"]) {
   const parsed = workspaceIdParamSchema.safeParse(params);
 
   if (!parsed.success) {
