@@ -1,11 +1,20 @@
 import { toNodeHandler } from "better-auth/node";
+import cors from "cors";
 import "dotenv/config";
 import express from "express";
 import { auth } from "./lib/auth.js";
 import { workspaceRouter } from "./routes/workspaceRoute.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 const port = process.env.PORT ?? 8080;
+
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL ?? "http://localhost:3000",
+    credentials: true,
+  }),
+);
 
 app.all("/api/auth/{*any}", toNodeHandler(auth));
 
@@ -20,6 +29,8 @@ app.get("/", (_req, res) => {
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
+
+app.use(errorHandler);
 
 app.listen(port, () => {
   console.log(`Server running on <http://localhost>:${port}`);
