@@ -2,6 +2,7 @@ import { toNodeHandler } from "better-auth/node";
 import "dotenv/config";
 import express from "express";
 import { auth } from "./lib/auth.js";
+import { workspaceRouter } from "./routes/workspaceRoute.js";
 
 const app = express();
 const port = process.env.PORT ?? 8080;
@@ -9,6 +10,8 @@ const port = process.env.PORT ?? 8080;
 app.all("/api/auth/{*any}", toNodeHandler(auth));
 
 app.use(express.json());
+
+app.use("/api/workspaces", workspaceRouter);
 
 app.get("/", (_req, res) => {
   res.json({ message: "Hello" });

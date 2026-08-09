@@ -6,8 +6,7 @@ import type { Session } from "../lib/session.js";
 declare global {
   namespace Express {
     interface Request {
-      session?: Session["session"];
-      user?: Session["user"];
+      session: Session;
     }
   }
 }
@@ -27,8 +26,7 @@ export async function requireAuth(
       return;
     }
 
-    req.session = session.session;
-    req.user = session.user;
+    req.session = session;
 
     next();
   } catch {
