@@ -12,14 +12,16 @@ import {
 import { workspaceIdParamSchema } from "../validators/workspaceValidator.js";
 import {
   bulkDeleteSourcesForWorkspace,
-  createTextOrMarkdownSource,
+  createSourceRecord,
   deleteSourceForWorkspace,
   getSourceForWorkspace,
-  importWebsiteSource,
-  importYoutubeSource,
   listSourcesForWorkspace,
-  uploadPdfSource,
 } from "../services/sourceService.js";
+import { getWorkspaceByIdForUser } from "../services/workspaceService.js";
+import { scrapeWebsite } from "../lib/firecrawl.js";
+import { uploadPdfToCloudinary } from "../lib/cloudinary.js";
+import { extractPdfFromBuffer } from "../lib/pdf.js";
+import { fetchYoutubeTranscript } from "../lib/youtube.js";
 import { parseWorkspaceId } from "./workspaceController.js";
 
 function parseSourceParams(params: Request["params"]) {
@@ -98,11 +100,17 @@ export async function getSource(req: Request, res: Response) {
 export async function createSource(req: Request, res: Response) {
   const { workspaceId } = parseWorkspaceId(req.params);
   const input = parseCreateBody(req.body);
-  const source = await createTextOrMarkdownSource(
+
+  await getWorkspaceByIdForUser(workspaceId, req.session.user.id);
+
+  const source = await createSourceRecord({
     workspaceId,
-    req.session.user.id,
-    input,
-  );
+    type: input.type,
+    title: input.title,
+    content: input.content,
+    status: "PENDING",
+  });
+
   res.status(201).json(source);
 }
 
@@ -132,12 +140,39 @@ export async function uploadPdf(req: Request, res: Response) {
 
   const title = typeof req.body.title === "string" ? req.body.title : undefined;
 
-  const source = await uploadPdfSource(
-    workspaceId,
-    req.session.user.id,
-    req.file,
-    title,
+  await getWorkspaceByIdForUser(workspaceId, req.session.user.id);
+
+  const upload = await uploadPdfToCloudinary(
+    req.file.buffer,
+    req.file.originalname,
   );
+
+  let content: string | null = null;
+  let pageCount: number | undefined;
+
+  try {
+    const extracted = await extractPdfFromBuffer(req.file.buffer);
+    content = extracted.text;
+    pageCount = extracted.pageCount;
+  } catch {
+    // Inngest will retry extraction from Cloudinary if upload-time parse fails.
+  }
+
+  const source = await createSourceRecord({
+    workspaceId,
+    type: "PDF",
+    title: title?.trim() || req.file.originalname.replace(/\.pdf$/i, ""),
+    content,
+    status: "PENDING",
+    metadata: {
+      fileUrl: upload.secureUrl,
+      fileName: upload.originalFilename,
+      fileSize: upload.bytes,
+      publicId: upload.publicId,
+      resourceType: upload.resourceType,
+      pageCount,
+    },
+  });
 
   res.status(201).json(source);
 }
@@ -145,21 +180,45 @@ export async function uploadPdf(req: Request, res: Response) {
 export async function importWebsite(req: Request, res: Response) {
   const { workspaceId } = workspaceIdParamSchema.parse(req.params);
   const input = importWebsiteSchema.parse(req.body);
-  const source = await importWebsiteSource(
+
+  await getWorkspaceByIdForUser(workspaceId, req.session.user.id);
+
+  const scraped = await scrapeWebsite(input.url);
+
+  const source = await createSourceRecord({
     workspaceId,
-    req.session.user.id,
-    input,
-  );
+    type: "WEBSITE",
+    title: input.title || scraped.title || input.url,
+    content: scraped.markdown,
+    url: scraped.sourceUrl,
+    status: "PENDING",
+    metadata: {
+      importedFrom: scraped.sourceUrl,
+    },
+  });
+
   res.status(201).json(source);
 }
 
 export async function importYoutube(req: Request, res: Response) {
   const { workspaceId } = workspaceIdParamSchema.parse(req.params);
   const input = importYoutubeSchema.parse(req.body);
-  const source = await importYoutubeSource(
+
+  await getWorkspaceByIdForUser(workspaceId, req.session.user.id);
+
+  const transcript = await fetchYoutubeTranscript(input.url);
+
+  const source = await createSourceRecord({
     workspaceId,
-    req.session.user.id,
-    input,
-  );
+    type: "YOUTUBE",
+    title: input.title || `YouTube: ${transcript.videoId}`,
+    content: transcript.content,
+    url: input.url,
+    status: "PENDING",
+    metadata: {
+      videoId: transcript.videoId,
+    },
+  });
+
   res.status(201).json(source);
 }

@@ -1,20 +1,9 @@
 import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../lib/db.js";
 
-// import { uploadPdfToCloudinary } from "../lib/cloudinary.js";
-// import { scrapeWebsite } from "../lib/firecrawl.js";
-// import { extractPdfFromBuffer } from "../lib/pdf.js";
-// import { enqueueSourceProcessing } from "../lib/source-events.js";
-// import { fetchYoutubeTranscript } from "../lib/youtube.js";
-
 import { NotFoundError } from "../types/errors.js";
-import {
-  CreateSourceInput,
-  ImportWebsiteInput,
-  ImportYoutubeInput,
-} from "../validators/sourceValidator.js";
-import { getWorkspaceByIdForUser } from "./workspaceService.js";
 import { ListSourcesQuery } from "../validators/sourceValidator.js";
+import { getWorkspaceByIdForUser } from "./workspaceService.js";
 
 export const sourceSelect = {
   id: true,
@@ -29,6 +18,10 @@ export const sourceSelect = {
   updatedAt: true,
 } as const;
 
+export type SourceRecord = Prisma.SourceGetPayload<{
+  select: typeof sourceSelect;
+}>;
+
 export type CreateSourceData = {
   workspaceId: string;
   type: SourceRecord["type"];
@@ -39,9 +32,12 @@ export type CreateSourceData = {
   metadata?: Prisma.InputJsonValue;
 };
 
-export type SourceRecord = Prisma.SourceGetPayload<{
-  select: typeof sourceSelect;
-}>;
+export function findSourceById(sourceId: string) {
+  return prisma.source.findUnique({
+    where: { id: sourceId },
+    select: sourceSelect,
+  });
+}
 
 export function createSourceRecord(data: CreateSourceData) {
   return prisma.source.create({
@@ -54,13 +50,6 @@ export function createSourceRecord(data: CreateSourceData) {
       status: data.status ?? "PENDING",
       metadata: data.metadata,
     },
-    select: sourceSelect,
-  });
-}
-
-export function findSourceById(sourceId: string) {
-  return prisma.source.findUnique({
-    where: { id: sourceId },
     select: sourceSelect,
   });
 }
@@ -78,19 +67,6 @@ export function updateSourceRecord(
     data,
     select: sourceSelect,
   });
-}
-
-async function createAndProcessSource(
-  data: Parameters<typeof createSourceRecord>[0],
-) {
-  const source = await createSourceRecord(data); //
-
-  //   await enqueueSourceProcessing({
-  //     sourceId: source.id,
-  //     workspaceId: source.workspaceId,
-  //   });
-
-  return source;
 }
 
 export async function listSourcesForWorkspace(
@@ -166,101 +142,3 @@ export async function bulkDeleteSourcesForWorkspace(
     await deleteSourceForWorkspace(workspaceId, sourceId, userId);
   }
 }
-
-// export async function createTextOrMarkdownSource(
-//   workspaceId: string,
-//   userId: string,
-//   input: CreateSourceInput,
-// ) {
-//   await getWorkspaceByIdForUser(workspaceId, userId);
-
-//   return createAndProcessSource({
-//     workspaceId,
-//     type: input.type,
-//     title: input.title,
-//     content: input.content,
-//     status: "PENDING",
-//   });
-// }
-
-// export async function importWebsiteSource(
-//   workspaceId: string,
-//   userId: string,
-//   input: ImportWebsiteInput,
-// ) {
-//   await getWorkspaceByIdForUser(workspaceId, userId);
-
-//   const scraped = await scrapeWebsite(input.url);
-
-//   return createAndProcessSource({
-//     workspaceId,
-//     type: "WEBSITE",
-//     title: input.title || scraped.title || input.url,
-//     content: scraped.markdown,
-//     url: scraped.sourceUrl,
-//     status: "PENDING",
-//     metadata: {
-//       importedFrom: scraped.sourceUrl,
-//     },
-//   });
-// }
-
-// export async function uploadPdfSource(
-//   workspaceId: string,
-//   userId: string,
-//   file: Express.Multer.File,
-//   title?: string,
-// ) {
-//   await getWorkspaceByIdForUser(workspaceId, userId);
-
-//   const upload = await uploadPdfToCloudinary(file.buffer, file.originalname);
-
-//   let content: string | null = null;
-//   let pageCount: number | undefined;
-
-//   try {
-//     const extracted = await extractPdfFromBuffer(file.buffer);
-//     content = extracted.text;
-//     pageCount = extracted.pageCount;
-//   } catch {
-//     // Inngest will retry extraction from Cloudinary if upload-time parse fails.
-//   }
-
-//   return createAndProcessSource({
-//     workspaceId,
-//     type: "PDF",
-//     title: title?.trim() || file.originalname.replace(/\.pdf$/i, ""),
-//     content,
-//     status: "PENDING",
-//     metadata: {
-//       fileUrl: upload.secureUrl,
-//       fileName: upload.originalFilename,
-//       fileSize: upload.bytes,
-//       publicId: upload.publicId,
-//       resourceType: upload.resourceType,
-//       pageCount,
-//     },
-//   });
-// }
-
-// export async function importYoutubeSource(
-//   workspaceId: string,
-//   userId: string,
-//   input: ImportYoutubeInput,
-// ) {
-//   await getWorkspaceByIdForUser(workspaceId, userId);
-
-//   const transcript = await fetchYoutubeTranscript(input.url);
-
-//   return createAndProcessSource({
-//     workspaceId,
-//     type: "YOUTUBE",
-//     title: input.title || `YouTube: ${transcript.videoId}`,
-//     content: transcript.content,
-//     url: input.url,
-//     status: "PENDING",
-//     metadata: {
-//       videoId: transcript.videoId,
-//     },
-//   });
-// }
