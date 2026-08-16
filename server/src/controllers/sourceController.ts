@@ -23,6 +23,7 @@ import { uploadPdfToCloudinary } from "../lib/cloudinary.js";
 import { extractPdfFromBuffer } from "../lib/pdf.js";
 import { fetchYoutubeTranscript } from "../lib/youtube.js";
 import { parseWorkspaceId } from "./workspaceController.js";
+import { enqueueSourceProcessing } from "../lib/sourceEvents.js";
 
 function parseSourceParams(params: Request["params"]) {
   const parsed = sourceIdParamSchema.safeParse(params);
@@ -76,6 +77,19 @@ function parseBulkDeleteBody(body: unknown) {
   return parsed.data;
 }
 
+async function createAndProcessSource(
+  data: Parameters<typeof createSourceRecord>[0],
+) {
+  const source = await createSourceRecord(data); //
+
+  await enqueueSourceProcessing({
+    sourceId: source.id,
+    workspaceId: source.workspaceId,
+  });
+
+  return source;
+}
+
 export async function listSources(req: Request, res: Response) {
   const { workspaceId } = parseWorkspaceId(req.params);
   const filters = parseListQuery(req.query);
@@ -97,13 +111,13 @@ export async function getSource(req: Request, res: Response) {
   res.json(source);
 }
 
-export async function createSource(req: Request, res: Response) {
+export async function createTextOrMarkdownSource(req: Request, res: Response) {
   const { workspaceId } = parseWorkspaceId(req.params);
   const input = parseCreateBody(req.body);
 
   await getWorkspaceByIdForUser(workspaceId, req.session.user.id);
 
-  const source = await createSourceRecord({
+  const source = await createAndProcessSource({
     workspaceId,
     type: input.type,
     title: input.title,
@@ -158,7 +172,7 @@ export async function uploadPdf(req: Request, res: Response) {
     // Inngest will retry extraction from Cloudinary if upload-time parse fails.
   }
 
-  const source = await createSourceRecord({
+  const source = await createAndProcessSource({
     workspaceId,
     type: "PDF",
     title: title?.trim() || req.file.originalname.replace(/\.pdf$/i, ""),
@@ -185,7 +199,7 @@ export async function importWebsite(req: Request, res: Response) {
 
   const scraped = await scrapeWebsite(input.url);
 
-  const source = await createSourceRecord({
+  const source = await createAndProcessSource({
     workspaceId,
     type: "WEBSITE",
     title: input.title || scraped.title || input.url,
@@ -208,7 +222,7 @@ export async function importYoutube(req: Request, res: Response) {
 
   const transcript = await fetchYoutubeTranscript(input.url);
 
-  const source = await createSourceRecord({
+  const source = await createAndProcessSource({
     workspaceId,
     type: "YOUTUBE",
     title: input.title || `YouTube: ${transcript.videoId}`,

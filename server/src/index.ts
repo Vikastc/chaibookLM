@@ -6,6 +6,9 @@ import { auth } from "./lib/auth.js";
 import { workspaceRouter } from "./routes/workspaceRoute.js";
 import { sourceRouter } from "./routes/sourceRoute.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { inngest } from "./inngest/client.js";
+import { serve } from "inngest/express";
+import { functions } from "./inngest/index.js";
 
 const app = express();
 const port = process.env.PORT ?? 8080;
@@ -20,6 +23,7 @@ app.use(
 app.all("/api/auth/{*any}", toNodeHandler(auth));
 
 app.use(express.json());
+app.use("/api/inngest", serve({ client: inngest, functions }));
 
 app.use("/api/workspaces", workspaceRouter);
 app.use("/api/workspaces/:workspaceId/sources", sourceRouter);

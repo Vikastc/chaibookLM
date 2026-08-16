@@ -1,4 +1,5 @@
 import { prisma } from "../lib/db.js";
+import { deleteWorkspaceVectors } from "../lib/pinecone.js";
 import { NotFoundError } from "../types/errors.js";
 import type {
   CreateWorkspaceInput,
@@ -82,11 +83,11 @@ export async function deleteWorkspaceForUser(
 ) {
   await getWorkspaceByIdForUser(workspaceId, userId);
 
-  //   try {
-  //     await deleteWorkspaceVectors(workspaceId);
-  //   } catch (error) {
-  //     console.error("Failed to delete Pinecone namespace:", error);
-  //   }
+  try {
+    await deleteWorkspaceVectors(workspaceId);
+  } catch (error) {
+    console.error("Failed to delete Pinecone namespace:", error);
+  }
 
   await prisma.workspace.delete({
     where: { id: workspaceId },

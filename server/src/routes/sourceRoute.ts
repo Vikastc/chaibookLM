@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   bulkDeleteSources,
-  createSource,
+  createTextOrMarkdownSource,
   deleteSource,
   getSource,
   importWebsite,
@@ -17,8 +17,8 @@ export const sourceRouter = Router({ mergeParams: true });
 sourceRouter.use(requireAuth);
 
 sourceRouter.get("/", listSources);
-sourceRouter.post("/", createSource);
 sourceRouter.post("/bulk-delete", bulkDeleteSources);
+sourceRouter.post("/text-markdown", createTextOrMarkdownSource);
 sourceRouter.post("/pdf", uploadSinglePdf, uploadPdf);
 sourceRouter.post("/website", importWebsite);
 sourceRouter.post("/youtube", importYoutube);
