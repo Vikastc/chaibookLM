@@ -87,4 +87,4 @@ export const processSource = inngest.createFunction(
 //     return { conversationId, status: "SUMMARIZED" };
 //   },
 // );
-// export const functions = [processSource, summarizeConversation];
+export const functions = [processSource];
