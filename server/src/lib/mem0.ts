@@ -92,6 +92,28 @@ export async function listUserMemories(userId: string) {
 }
 
 /**
+ * Fetches a single memory by id, scoped to the owning user.
+ *
+ * @param memoryId - Mem0 memory id
+ * @param userId - Expected owner of the memory
+ * @returns Normalized memory, or `null` when missing, unconfigured, or owned by another user
+ *
+ */
+export async function getUserMemoryById(memoryId: string, userId: string) {
+  if (!process.env.MEM0_API_KEY?.trim()) {
+    return null;
+  }
+
+  const record = await getMem0Client().get(memoryId);
+
+  if (!record || record.userId !== userId) {
+    return null;
+  }
+
+  return mapMemory(record);
+}
+
+/**
  * Semantic search over a user's memories for RAG chat context.
  *
  * @param userId - Authenticated user's id
