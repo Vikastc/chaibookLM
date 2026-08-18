@@ -11,4 +11,12 @@ export type SourceCreatedEvent = {
   };
 };
 
-export type InngestEvent = SourceCreatedEvent;
+export type ConversationSummarizeEvent = {
+  name: "conversation/summarize";
+  data: {
+    conversationId: string;
+    userId: string;
+  };
+};
+
+export type InngestEvent = SourceCreatedEvent | ConversationSummarizeEvent;

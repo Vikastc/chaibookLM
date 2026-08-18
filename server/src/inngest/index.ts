@@ -1,7 +1,8 @@
 import { findChunksBySourceId } from "../services/sourceChunkService.js";
 import { findSourceById } from "../services/sourceService.js";
-import { processArtifactById } from "../services/artifact.services.js";
-import { summarizeConversationById } from "../services/conversation-memory.services.js";
+// import { processArtifactById } from "../services/artifact.services.js";
+import { summarizeConversationById } from "../controllers/conversationMemController.js";
+
 import {
   chunkSourceContent,
   embedAndIndexSource,
@@ -56,6 +57,23 @@ export const processSource = inngest.createFunction(
   },
 );
 
+export const summarizeConversation = inngest.createFunction(
+  {
+    id: "summarize-conversation",
+    retries: 2,
+    triggers: [{ event: "conversation/summarize" }],
+  },
+  async ({ event, step }) => {
+    const { conversationId, userId } = event.data;
+
+    await step.run("summarize", () =>
+      summarizeConversationById(conversationId, userId),
+    );
+
+    return { conversationId, status: "SUMMARIZED" };
+  },
+);
+
 // export const generateArtifact = inngest.createFunction(
 //   {
 //     id: "generate-artifact",
@@ -71,20 +89,4 @@ export const processSource = inngest.createFunction(
 //   },
 // );
 
-// export const summarizeConversation = inngest.createFunction(
-//   {
-//     id: "summarize-conversation",
-//     retries: 2,
-//     triggers: [{ event: "conversation/summarize" }],
-//   },
-//   async ({ event, step }) => {
-//     const { conversationId, userId } = event.data;
-
-//     await step.run("summarize", () =>
-//       summarizeConversationById(conversationId, userId),
-//     );
-
-//     return { conversationId, status: "SUMMARIZED" };
-//   },
-// );
 export const functions = [processSource];
