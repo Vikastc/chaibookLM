@@ -6,6 +6,7 @@ import { auth } from "./lib/auth.js";
 import { workspaceRouter } from "./routes/workspaceRoute.js";
 import { sourceRouter } from "./routes/sourceRoute.js";
 import { memoryRouter } from "./routes/memoryRoute.js";
+import { artifactRouter } from "./routes/artifactRoute.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { inngest } from "./inngest/client.js";
 import { serve } from "inngest/express";
@@ -28,6 +29,7 @@ app.use("/api/inngest", serve({ client: inngest, functions }));
 
 app.use("/api/workspaces", workspaceRouter);
 app.use("/api/workspaces/:workspaceId/sources", sourceRouter);
+app.use("/api/workspaces/:workspaceId/artifacts", artifactRouter);
 app.use("/api/memories", memoryRouter);
 
 app.get("/", (_req, res) => {

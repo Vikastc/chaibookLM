@@ -1,189 +1,80 @@
-import type { Prisma } from "../generated/prisma/client.js";
+import type { Request, Response } from "express";
 import {
-  createArtifactRecord,
-  deleteArtifactRecord,
-  findArtifactById,
-  findArtifactByIdAndWorkspaceId,
-  findArtifactsByWorkspaceId,
-  updateArtifactRecord,
-  type ArtifactRecord,
+  createArtifactForWorkspace,
+  deleteArtifactForWorkspace,
+  getArtifactForWorkspace,
+  listArtifactsForWorkspace,
 } from "../services/artifactService.js";
-import { NotFoundError } from "../types/errors.js";
+import { ValidationError } from "../types/errors.js";
+import { getZodFieldErrors } from "../utils/zod-error.js";
 import {
-  gatherSourceContext,
-  generateArtifactContent,
-} from "./artifactGenerate.js";
+  artifactIdParamSchema,
+  createArtifactSchema,
+} from "../validators/artifactValidator.js";
+import { parseWorkspaceId } from "./workspaceController.js";
 
-import type { CreateArtifactInput } from "../validators/artifactValidator.js";
-import { getWorkspaceByIdForUser } from "../services/workspaceService.js";
-import { enqueueArtifactGeneration } from "../lib/artifactEvents.js";
+function parseArtifactParams(params: Request["params"]) {
+  const parsed = artifactIdParamSchema.safeParse(params);
 
-/**
- * Lists all learning artifacts in a workspace.
- *
- * @param workspaceId - Workspace to list artifacts from
- * @param userId - Authenticated user's id
- * @returns Artifact records ordered by creation time
- *
- */
-export async function listArtifactsForWorkspace(
-  workspaceId: string,
-  userId: string,
-) {
-  await getWorkspaceByIdForUser(workspaceId, userId);
-  return findArtifactsByWorkspaceId(workspaceId);
-}
-
-/**
- * Loads a single artifact after verifying workspace ownership.
- *
- * @param workspaceId - Workspace the artifact belongs to
- * @param artifactId - Artifact to fetch
- * @param userId - Authenticated user's id
- * @returns Artifact record with content when status is `READY`
- * @throws {NotFoundError} When the artifact does not exist in this workspace
- *
- */
-export async function getArtifactForWorkspace(
-  workspaceId: string,
-  artifactId: string,
-  userId: string,
-) {
-  await getWorkspaceByIdForUser(workspaceId, userId);
-
-  const artifact = await findArtifactByIdAndWorkspaceId(
-    artifactId,
-    workspaceId,
-  );
-
-  if (!artifact) {
-    throw new NotFoundError("Artifact not found");
-  }
-
-  return artifact;
-}
-
-/**
- * Creates a pending artifact and enqueues background generation via Inngest.
- *
- * Validates that ready sources exist before creating the row. The actual AI
- * generation runs asynchronously in {@link processArtifactById}.
- *
- * @param workspaceId - Workspace to attach the artifact to
- * @param userId - Authenticated user's id
- * @param input - Artifact type, optional title, optional source id filter
- * @returns New artifact with status `PENDING`
- * @throws {ValidationError} When no ready sources are available
- *
- */
-export async function createArtifactForWorkspace(
-  workspaceId: string,
-  userId: string,
-  input: CreateArtifactInput,
-) {
-  await getWorkspaceByIdForUser(workspaceId, userId);
-
-  const context = await gatherSourceContext(workspaceId, input.sourceIds);
-
-  const artifact = await createArtifactRecord({
-    workspaceId,
-    type: input.type,
-    title:
-      input.title ||
-      `${
-        {
-          SUMMARY: "Summary",
-          TAKEAWAYS: "Key Takeaways",
-          FLASHCARDS: "Flashcards",
-          QUIZ: "Quiz",
-          MINDMAP: "Mind Map",
-          REPORT: "AI Report",
-        }[input.type]
-      } · ${new Date().toLocaleDateString()}`,
-    sourceIds: context.sourceIds,
-    status: "PENDING",
-  });
-
-  await enqueueArtifactGeneration({
-    artifactId: artifact.id,
-    workspaceId,
-  });
-
-  return artifact;
-}
-
-/**
- * Deletes an artifact from the workspace.
- *
- * @param workspaceId - Workspace the artifact belongs to
- * @param artifactId - Artifact to delete
- * @param userId - Authenticated user's id
- * @returns Resolves when the artifact row is deleted
- * @throws {NotFoundError} When the artifact is not found
- *
- */
-export async function deleteArtifactForWorkspace(
-  workspaceId: string,
-  artifactId: string,
-  userId: string,
-) {
-  await getArtifactForWorkspace(workspaceId, artifactId, userId);
-  await deleteArtifactRecord(artifactId);
-}
-
-/**
- * Runs the full artifact generation pipeline (used by Inngest worker).
- *
- * ```
- * status: PROCESSING
- *   → gatherSourceContext
- *   → generateArtifactContent
- *   → status: READY (or FAILED on error)
- * ```
- *
- * @param artifactId - Artifact to generate content for
- * @returns Updated artifact with `READY` status and generated content
- * @throws When the artifact is missing or generation fails (status set to `FAILED`)
- *
- *
- */
-export async function processArtifactById(artifactId: string) {
-  const artifact = await findArtifactById(artifactId);
-  if (!artifact) {
-    throw new Error("Artifact not found");
-  }
-
-  await updateArtifactRecord(artifactId, { status: "PROCESSING" });
-
-  try {
-    const context = await gatherSourceContext(
-      artifact.workspaceId,
-      artifact.sourceIds,
+  if (!parsed.success) {
+    throw new ValidationError(
+      "Invalid artifact id",
+      getZodFieldErrors(parsed.error),
     );
-
-    const content = await generateArtifactContent(artifact.type, context.text);
-
-    return updateArtifactRecord(artifactId, {
-      status: "READY",
-      content: content as Prisma.InputJsonValue,
-      metadata: {
-        generatedAt: new Date().toISOString(),
-        processingError: undefined,
-      },
-    });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Artifact generation failed";
-
-    await updateArtifactRecord(artifactId, {
-      status: "FAILED",
-      metadata: {
-        processingError: message,
-      },
-    });
-
-    throw error;
   }
+
+  return parsed.data;
 }
 
-export type { ArtifactRecord };
+function parseCreateBody(body: unknown) {
+  const parsed = createArtifactSchema.safeParse(body);
+
+  if (!parsed.success) {
+    throw new ValidationError(
+      "Validation failed",
+      getZodFieldErrors(parsed.error),
+    );
+  }
+
+  return parsed.data;
+}
+
+export async function listArtifacts(req: Request, res: Response) {
+  const { workspaceId } = parseWorkspaceId(req.params);
+  const artifacts = await listArtifactsForWorkspace(
+    workspaceId,
+    req.session.user.id,
+  );
+  res.json(artifacts);
+}
+
+export async function getArtifact(req: Request, res: Response) {
+  const { workspaceId, artifactId } = parseArtifactParams(req.params);
+  const artifact = await getArtifactForWorkspace(
+    workspaceId,
+    artifactId,
+    req.session.user.id,
+  );
+  res.json(artifact);
+}
+
+export async function createArtifact(req: Request, res: Response) {
+  const { workspaceId } = parseWorkspaceId(req.params);
+  const input = parseCreateBody(req.body);
+  const artifact = await createArtifactForWorkspace(
+    workspaceId,
+    req.session.user.id,
+    input,
+  );
+  res.status(201).json(artifact);
+}
+
+export async function deleteArtifact(req: Request, res: Response) {
+  const { workspaceId, artifactId } = parseArtifactParams(req.params);
+  await deleteArtifactForWorkspace(
+    workspaceId,
+    artifactId,
+    req.session.user.id,
+  );
+  res.status(204).send();
+}

@@ -1,6 +1,6 @@
 import { findChunksBySourceId } from "../services/sourceChunkService.js";
 import { findSourceById } from "../services/sourceService.js";
-// import { processArtifactById } from "../services/artifact.services.js";
+import { processArtifactById } from "../services/artifactService.js";
 import { summarizeConversationById } from "../controllers/conversationMemController.js";
 
 import {
@@ -11,7 +11,6 @@ import {
   markSourceProcessing,
 } from "../controllers/sourceChunkController.js";
 import { inngest } from "./client.js";
-import { processArtifactById } from "../controllers/artifactController.js";
 
 export const processSource = inngest.createFunction(
   {
@@ -90,4 +89,4 @@ export const generateArtifact = inngest.createFunction(
   },
 );
 
-export const functions = [processSource];
+export const functions = [processSource, summarizeConversation, generateArtifact];
