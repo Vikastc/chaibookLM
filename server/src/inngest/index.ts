@@ -11,6 +11,7 @@ import {
   markSourceProcessing,
 } from "../controllers/sourceChunkController.js";
 import { inngest } from "./client.js";
+import { processArtifactById } from "../controllers/artifactController.js";
 
 export const processSource = inngest.createFunction(
   {
@@ -74,19 +75,19 @@ export const summarizeConversation = inngest.createFunction(
   },
 );
 
-// export const generateArtifact = inngest.createFunction(
-//   {
-//     id: "generate-artifact",
-//     retries: 2,
-//     triggers: [{ event: "artifact/generate" }],
-//   },
-//   async ({ event, step }) => {
-//     const { artifactId } = event.data;
+export const generateArtifact = inngest.createFunction(
+  {
+    id: "generate-artifact",
+    retries: 2,
+    triggers: [{ event: "artifact/generate" }],
+  },
+  async ({ event, step }) => {
+    const { artifactId } = event.data;
 
-//     await step.run("generate", () => processArtifactById(artifactId));
+    await step.run("generate", () => processArtifactById(artifactId));
 
-//     return { artifactId, status: "READY" };
-//   },
-// );
+    return { artifactId, status: "READY" };
+  },
+);
 
 export const functions = [processSource];

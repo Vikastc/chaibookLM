@@ -100,6 +100,20 @@ export async function listSourcesForWorkspace(
   });
 }
 
+/**
+ * Lists READY sources for a workspace without an ownership check.
+ *
+ * Used by internal pipelines (e.g. artifact generation, Inngest workers) where
+ * workspace ownership has already been verified by the caller.
+ */
+export function findReadySourcesByWorkspaceId(workspaceId: string) {
+  return prisma.source.findMany({
+    where: { workspaceId, status: "READY" },
+    select: sourceSelect,
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export async function getSourceForWorkspace(
   workspaceId: string,
   sourceId: string,
