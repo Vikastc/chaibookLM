@@ -3,9 +3,9 @@
 import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { BookOpenIcon } from "lucide-react"
 
 import { signIn, useSession } from "@/lib/auth-client"
+import { Wordmark } from "@/components/brand"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 
@@ -34,17 +34,6 @@ function GoogleMark() {
         d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42A11.97 11.97 0 0 0 1.29 6.62l3.98 3.09C6.22 6.86 8.87 4.75 12 4.75Z"
       />
     </svg>
-  )
-}
-
-function Wordmark() {
-  return (
-    <span className="inline-flex items-center gap-2 text-sm font-medium tracking-tight">
-      <span className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
-        <BookOpenIcon className="size-3.5" />
-      </span>
-      chaibook
-    </span>
   )
 }
 
@@ -113,7 +102,9 @@ function SignInForm() {
               disabled={isRedirecting}
             >
               {isRedirecting ? <Spinner /> : <GoogleMark />}
-              {isRedirecting ? "Redirecting to Google…" : "Continue with Google"}
+              {isRedirecting
+                ? "Redirecting to Google…"
+                : "Continue with Google"}
             </Button>
 
             {error && (
