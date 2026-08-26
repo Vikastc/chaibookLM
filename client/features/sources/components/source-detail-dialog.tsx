@@ -122,6 +122,7 @@ export function SourceDetailDialog({
                 <Button
                   variant="outline"
                   size="sm"
+                  nativeButton={false}
                   render={<a href={link} target="_blank" rel="noreferrer" />}
                 >
                   <ExternalLinkIcon />

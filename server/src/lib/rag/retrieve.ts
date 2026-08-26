@@ -61,7 +61,7 @@ export async function retrieveWorkspaceContext(
 
 export type UserMemoryContext = string;
 
-export function buildChatSystemPrompt(input: {
+export function buildConversationSystemPrompt(input: {
   chunks: RetrievedChunk[];
   conversationSummary?: string | null;
   userMemories?: UserMemoryContext[];

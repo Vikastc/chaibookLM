@@ -97,7 +97,12 @@ function WorkspaceView({ workspaceId }: { workspaceId: string }) {
           <p className="mt-2 text-base leading-relaxed text-muted-foreground">
             It may have been deleted, or the link is wrong.
           </p>
-          <Button variant="outline" className="mt-6" render={<Link href="/" />}>
+          <Button
+            variant="outline"
+            className="mt-6"
+            nativeButton={false}
+            render={<Link href="/" />}
+          >
             Back to workspaces
           </Button>
         </div>
@@ -112,6 +117,7 @@ function WorkspaceView({ workspaceId }: { workspaceId: string }) {
           <Button
             variant="ghost"
             size="icon"
+            nativeButton={false}
             render={<Link href="/" aria-label="Back to workspaces" />}
           >
             <ArrowLeftIcon />
