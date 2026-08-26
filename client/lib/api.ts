@@ -36,18 +36,34 @@ async function parseErrorResponse(res: Response): Promise<ApiError> {
   }
 }
 
+const REQUEST_TIMEOUT_MS = 15_000
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response
   try {
+    const isFormData = init?.body instanceof FormData
+    // Abort the request if the caller cancels (e.g. React Query unmounts the
+    // query) or if the server doesn't respond within the timeout.
+    const signal = AbortSignal.any([
+      AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      ...(init?.signal ? [init.signal] : []),
+    ])
     res = await fetch(`${API_URL}${path}`, {
       credentials: "include",
       ...init,
+      signal,
       headers: {
-        "Content-Type": "application/json",
+        // FormData sets its own multipart boundary — don't override it.
+        ...(isFormData ? {} : { "Content-Type": "application/json" }),
         ...init?.headers,
       },
     })
-  } catch {
+  } catch (err) {
+    // Let cancellations propagate so React Query can handle them.
+    if (err instanceof DOMException && err.name === "AbortError") throw err
+    if (err instanceof DOMException && err.name === "TimeoutError") {
+      throw new ApiError(0, "The server took too long to respond.")
+    }
     throw new ApiError(0, "Couldn't reach the server. Is it running?")
   }
 
@@ -57,7 +73,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  get: <T>(path: string) => request<T>(path),
+  get: <T>(path: string, signal?: AbortSignal) =>
+    request<T>(path, { signal }),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, {
       method: "POST",
@@ -66,4 +83,6 @@ export const api = {
   patch: <T>(path: string, body: unknown) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  postForm: <T>(path: string, body: FormData) =>
+    request<T>(path, { method: "POST", body }),
 }

@@ -52,6 +52,7 @@ async function extractSourceText(source: SourceRecord) {
       !Array.isArray(source.metadata)
         ? (source.metadata as SourceMetadata)
         : {};
+
     if (!metadata.fileUrl) {
       throw new Error("PDF source is missing fileUrl metadata");
     }

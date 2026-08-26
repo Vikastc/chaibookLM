@@ -17,13 +17,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 
@@ -37,11 +30,33 @@ import {
 
 const ICON_PRESETS = ["📚", "🧠", "💼", "🔬", "📊", "🎓", "💡", "📝"]
 
+const MODEL_HINTS: Record<ChatModel, string> = {
+  "gpt-4o-mini": "Fast, everyday",
+  "gpt-4o": "Deeper answers",
+}
+
 type WorkspaceDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   /** When provided, the dialog edits this workspace. Otherwise it creates one. */
   workspace?: Workspace
+}
+
+function FieldLabel({
+  htmlFor,
+  children,
+}: {
+  htmlFor?: string
+  children: React.ReactNode
+}) {
+  return (
+    <Label
+      htmlFor={htmlFor}
+      className="text-xs font-medium tracking-wider text-muted-foreground uppercase"
+    >
+      {children}
+    </Label>
+  )
 }
 
 export function WorkspaceDialog({
@@ -98,45 +113,45 @@ export function WorkspaceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="gap-5 p-5 sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="font-heading text-xl">
             {isEdit ? "Edit workspace" : "New workspace"}
           </DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? "Update the details of this workspace."
-              : "A workspace groups sources, chats, and study material around one topic."}
+            A home for one topic — its sources, chats, and study material.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="grid gap-4">
-          <div className="grid gap-1.5">
-            <Label htmlFor="workspace-title">Title</Label>
+        <form onSubmit={handleSubmit} className="grid gap-5">
+          {/* Title — hero field */}
+          <div className="grid gap-2">
+            <Label htmlFor="workspace-title" className="sr-only">
+              Title
+            </Label>
             <Input
               id="workspace-title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="e.g. Biology finals"
+              placeholder="Name your workspace"
               maxLength={120}
               required
               autoFocus
               aria-invalid={!!error?.fieldError("title")}
+              className="h-12 rounded-xl border-transparent bg-muted/60 px-4 font-heading text-lg font-medium placeholder:font-normal placeholder:text-muted-foreground/60 focus-visible:border-border focus-visible:bg-card"
             />
             {error?.fieldError("title") && (
-              <p className="text-xs text-destructive">
+              <p className="text-sm text-destructive">
                 {error.fieldError("title")}
               </p>
             )}
           </div>
 
-          <div className="grid gap-1.5">
-            <Label htmlFor="workspace-description">
-              Description{" "}
-              <span className="font-normal text-muted-foreground">
-                (optional)
-              </span>
-            </Label>
+          {/* Description */}
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="workspace-description">
+              Description · optional
+            </FieldLabel>
             <Textarea
               id="workspace-description"
               value={description}
@@ -144,79 +159,86 @@ export function WorkspaceDialog({
               placeholder="What is this workspace about?"
               maxLength={500}
               aria-invalid={!!error?.fieldError("description")}
+              className="min-h-24 rounded-xl border-transparent bg-muted/60 px-4 py-3 text-base focus-visible:border-border focus-visible:bg-card"
             />
             {error?.fieldError("description") && (
-              <p className="text-xs text-destructive">
+              <p className="text-sm text-destructive">
                 {error.fieldError("description")}
               </p>
             )}
           </div>
 
-          <div className="grid gap-1.5">
-            <Label htmlFor="workspace-icon">
-              Icon{" "}
-              <span className="font-normal text-muted-foreground">
-                (optional)
-              </span>
-            </Label>
-            <div className="flex items-center gap-2">
+          {/* Icon — tile picker */}
+          <div className="grid gap-2">
+            <FieldLabel htmlFor="workspace-icon">Icon · optional</FieldLabel>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {ICON_PRESETS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => setIcon(icon === emoji ? "" : emoji)}
+                  aria-pressed={icon === emoji}
+                  className={cn(
+                    "flex size-10 items-center justify-center rounded-xl text-xl transition-colors focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    icon === emoji
+                      ? "bg-accent ring-2 ring-primary/30"
+                      : "hover:bg-muted"
+                  )}
+                >
+                  {emoji}
+                </button>
+              ))}
               <Input
                 id="workspace-icon"
                 value={icon}
                 onChange={(event) => setIcon(event.target.value)}
-                placeholder="📚"
+                placeholder="✏️"
                 maxLength={8}
-                className="w-16 text-center"
+                aria-label="Custom icon"
                 aria-invalid={!!error?.fieldError("icon")}
+                className="size-10 rounded-xl border-transparent bg-muted/60 p-0 text-center text-xl focus-visible:border-border focus-visible:bg-card"
               />
-              <div className="flex flex-wrap gap-1">
-                {ICON_PRESETS.map((emoji) => (
-                  <Button
-                    key={emoji}
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => setIcon(emoji)}
-                    className={cn(
-                      "text-base",
-                      icon === emoji && "bg-muted ring-1 ring-foreground/15"
-                    )}
-                  >
-                    {emoji}
-                  </Button>
-                ))}
-              </div>
             </div>
             {error?.fieldError("icon") && (
-              <p className="text-xs text-destructive">
+              <p className="text-sm text-destructive">
                 {error.fieldError("icon")}
               </p>
             )}
           </div>
 
-          <div className="grid gap-1.5">
-            <Label htmlFor="workspace-model">Default model</Label>
-            <Select
-              value={defaultModel}
-              onValueChange={(value) => setDefaultModel(value as ChatModel)}
-              items={CHAT_MODELS.map((model) => ({
-                value: model,
-                label: CHAT_MODEL_LABELS[model],
-              }))}
+          {/* Model — segmented control */}
+          <div className="grid gap-2">
+            <FieldLabel>Default model</FieldLabel>
+            <div
+              role="radiogroup"
+              aria-label="Default model"
+              className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1"
             >
-              <SelectTrigger id="workspace-model" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CHAT_MODELS.map((model) => (
-                  <SelectItem key={model} value={model}>
+              {CHAT_MODELS.map((model) => (
+                <button
+                  key={model}
+                  type="button"
+                  role="radio"
+                  aria-checked={defaultModel === model}
+                  onClick={() => setDefaultModel(model)}
+                  className={cn(
+                    "flex flex-col items-center gap-0.5 rounded-lg px-3 py-2.5 text-center transition-colors focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
+                    defaultModel === model
+                      ? "bg-card text-foreground shadow-xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <span className="text-sm font-medium">
                     {CHAT_MODEL_LABELS[model]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {MODEL_HINTS[model]}
+                  </span>
+                </button>
+              ))}
+            </div>
             {error?.fieldError("defaultModel") && (
-              <p className="text-xs text-destructive">
+              <p className="text-sm text-destructive">
                 {error.fieldError("defaultModel")}
               </p>
             )}
@@ -228,14 +250,14 @@ export function WorkspaceDialog({
             </p>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="-mx-5 -mb-5">
             <DialogClose
-              render={<Button variant="outline" type="button" />}
+              render={<Button variant="ghost" type="button" />}
               disabled={isPending}
             >
               Cancel
             </DialogClose>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending} className="px-4">
               {isPending && <Spinner />}
               {isEdit ? "Save changes" : "Create workspace"}
             </Button>

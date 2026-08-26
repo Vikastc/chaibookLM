@@ -87,5 +87,5 @@ export async function updateWorkspace(req: Request, res: Response) {
 export async function deleteWorkspace(req: Request, res: Response) {
   const { workspaceId } = parseWorkspaceId(req.params);
   await deleteWorkspaceForUser(workspaceId, req.session.user.id);
-  res.status(204).send();
+  res.status(204).json({ message: "Workspace deleted successfully" });
 }

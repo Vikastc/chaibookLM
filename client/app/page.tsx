@@ -94,7 +94,7 @@ function Dashboard({
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="flex h-14 items-center justify-between border-b bg-background px-6">
+      <header className="flex h-16 items-center justify-between border-b px-6">
         <Wordmark />
         <div className="flex items-center gap-1">
           <ModeToggle />
@@ -102,30 +102,36 @@ function Dashboard({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-10">
-        <h1 className="text-2xl font-medium tracking-tight sm:text-3xl">
+      <main className="relative mx-auto w-full max-w-6xl flex-1 px-6 py-12">
+        {/* Soft warm glow behind the greeting */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(60%_100%_at_50%_0%,var(--accent),transparent)] opacity-70"
+        />
+
+        <h1 className="font-heading text-4xl font-medium tracking-tight text-balance sm:text-5xl">
           {greeting()}
           {firstName ? `, ${firstName}` : ""}.
         </h1>
-        <p className="mt-1.5 text-sm text-muted-foreground sm:text-base">
-          Pick up where you left off, or start something new.
+        <p className="mt-3 text-base text-muted-foreground sm:text-lg">
+          Pick up where you left off, or brew something new.
         </p>
 
         {isPending ? (
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, index) => (
-              <Skeleton key={index} className="h-44 rounded-2xl" />
+              <Skeleton key={index} className="h-52 rounded-2xl" />
             ))}
           </div>
         ) : isError ? (
-          <div className="mt-24 flex flex-col items-center gap-3 text-center">
-            <TriangleAlertIcon className="size-5 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
+          <div className="mt-28 flex flex-col items-center gap-3 text-center">
+            <TriangleAlertIcon className="size-6 text-muted-foreground" />
+            <p className="text-base text-muted-foreground">
               {error instanceof Error
                 ? error.message
                 : "Couldn't load workspaces."}
             </p>
-            <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <Button variant="outline" onClick={() => refetch()}>
               Try again
             </Button>
           </div>
@@ -135,14 +141,14 @@ function Dashboard({
           />
         ) : (
           <>
-            <div className="mt-10 flex flex-wrap items-center gap-3">
-              <div className="relative w-full max-w-xs">
-                <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <div className="mt-12 flex flex-wrap items-center gap-3">
+              <div className="relative w-full max-w-sm">
+                <SearchIcon className="absolute top-1/2 left-3.5 size-4.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search workspaces"
-                  className="rounded-full bg-card pl-9"
+                  className="h-10 rounded-full bg-card pl-10 text-base"
                 />
               </div>
               <div className="ml-auto">
@@ -151,7 +157,7 @@ function Dashboard({
                   onValueChange={(value) => setSort(value as SortMode)}
                   items={SORT_ITEMS}
                 >
-                  <SelectTrigger className="w-40 bg-card">
+                  <SelectTrigger className="h-10 w-44 bg-card">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -166,24 +172,23 @@ function Dashboard({
             </div>
 
             {visible.length === 0 ? (
-              <div className="mt-24 flex flex-col items-center gap-2 text-center">
-                <p className="text-sm font-medium">
+              <div className="mt-28 flex flex-col items-center gap-2 text-center">
+                <p className="font-heading text-xl font-medium">
                   Nothing matches &ldquo;{query.trim()}&rdquo;
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   Try a different name or description.
                 </p>
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="mt-1"
+                  className="mt-2"
                   onClick={() => setQuery("")}
                 >
                   Clear search
                 </Button>
               </div>
             ) : (
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <CreateWorkspaceCard
                   onCreate={() => setDialog({ mode: "create" })}
                 />
@@ -226,13 +231,13 @@ function CreateWorkspaceCard({ onCreate }: { onCreate: () => void }) {
     <button
       type="button"
       onClick={onCreate}
-      className="group flex min-h-44 flex-col items-center justify-center gap-2.5 rounded-2xl border border-dashed border-border text-center transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+      className="group flex min-h-52 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border text-center transition-colors hover:border-primary/50 hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
     >
-      <span className="flex size-10 items-center justify-center rounded-full bg-brand text-white shadow-xs transition-transform group-hover:scale-105">
-        <PlusIcon className="size-5" />
+      <span className="flex size-12 items-center justify-center rounded-full bg-brand text-white shadow-xs transition-transform group-hover:scale-105">
+        <PlusIcon className="size-6" />
       </span>
-      <span className="text-sm font-medium">New workspace</span>
-      <span className="max-w-48 text-xs leading-relaxed text-muted-foreground">
+      <span className="font-heading text-lg font-medium">New workspace</span>
+      <span className="max-w-56 text-sm leading-relaxed text-muted-foreground">
         Start with a topic, a course, or a project
       </span>
     </button>

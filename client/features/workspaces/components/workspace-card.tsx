@@ -39,13 +39,13 @@ export function WorkspaceCard({
   onDelete,
 }: WorkspaceCardProps) {
   return (
-    <Card className="group relative rounded-2xl ring-foreground/5 transition-all ring-inset hover:-translate-y-0.5 hover:bg-card hover:shadow-md hover:ring-foreground/10">
+    <Card className="group relative min-h-52 rounded-2xl ring-foreground/5 transition-all [--card-spacing:--spacing(5)] ring-inset hover:-translate-y-0.5 hover:shadow-md hover:ring-foreground/10">
       <CardHeader>
-        <div className="flex size-10 items-center justify-center rounded-xl bg-accent text-xl leading-none">
+        <div className="flex size-11 items-center justify-center rounded-xl bg-accent text-2xl leading-none">
           {workspace.icon ? (
             <span aria-hidden="true">{workspace.icon}</span>
           ) : (
-            <BookOpenIcon className="size-4.5 text-accent-foreground" />
+            <BookOpenIcon className="size-5 text-accent-foreground" />
           )}
         </div>
         <CardAction>
@@ -77,7 +77,7 @@ export function WorkspaceCard({
             </DropdownMenuContent>
           </DropdownMenu>
         </CardAction>
-        <CardTitle className="mt-1.5 line-clamp-1">
+        <CardTitle className="mt-2 line-clamp-1 font-heading text-xl tracking-tight">
           {/* Stretched link: makes the whole card clickable while keeping the
               actions menu above it (z-10). */}
           <Link
@@ -87,11 +87,11 @@ export function WorkspaceCard({
             {workspace.title}
           </Link>
         </CardTitle>
-        <CardDescription className="line-clamp-2 min-h-10">
+        <CardDescription className="line-clamp-2 min-h-12 text-sm leading-relaxed">
           {workspace.description}
         </CardDescription>
       </CardHeader>
-      <CardContent className="mt-auto text-xs text-muted-foreground">
+      <CardContent className="mt-auto text-sm text-muted-foreground">
         Edited{" "}
         {formatDistanceToNow(new Date(workspace.updatedAt), {
           addSuffix: true,

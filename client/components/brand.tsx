@@ -19,11 +19,11 @@ export function Wordmark({ className }: { className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 text-sm font-semibold tracking-tight",
+        "inline-flex items-center gap-2 font-heading text-lg font-medium tracking-tight",
         className
       )}
     >
-      <LogoMark />
+      <LogoMark className="size-7 rounded-lg [&_svg]:size-4" />
       chaibook
     </span>
   )

@@ -54,10 +54,12 @@ function SignInForm() {
     setError(null)
     setIsRedirecting(true)
     try {
+      // Absolute URLs: BetterAuth resolves relative callback URLs against the
+      // server's base URL (localhost:8080), not the client.
       await signIn.social({
         provider: "google",
-        callbackURL: "/",
-        errorCallbackURL: "/sign-in",
+        callbackURL: `${window.location.origin}/`,
+        errorCallbackURL: `${window.location.origin}/sign-in`,
       })
     } catch {
       setError("Couldn't reach the auth server. Is it running on port 8080?")
@@ -87,11 +89,11 @@ function SignInForm() {
 
         <main className="flex flex-1 items-center justify-center px-6 py-16">
           <div className="w-full max-w-80">
-            <h1 className="text-lg font-semibold tracking-tight">
+            <h1 className="font-heading text-2xl font-medium tracking-tight">
               Sign in to chaibook
             </h1>
-            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-              One account for every notebook, source, and conversation.
+            <p className="mt-2 text-base leading-relaxed text-muted-foreground">
+              One account for every workspace, source, and conversation.
             </p>
 
             <Button
@@ -154,10 +156,10 @@ function SignInForm() {
             01 — READ, ASK, REMEMBER
           </span>
           <div>
-            <p className="max-w-xs text-2xl leading-snug font-medium tracking-tight">
+            <p className="max-w-md font-heading text-3xl leading-snug font-medium tracking-tight text-balance">
               Every source you feed it, one question away.
             </p>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-4 max-w-sm text-base leading-relaxed text-muted-foreground">
               Chaibook grounds every answer in the documents you upload — no
               guessing, no hallucinated citations.
             </p>

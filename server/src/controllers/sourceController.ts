@@ -80,7 +80,7 @@ function parseBulkDeleteBody(body: unknown) {
 async function createAndProcessSource(
   data: Parameters<typeof createSourceRecord>[0],
 ) {
-  const source = await createSourceRecord(data); //
+  const source = await createSourceRecord(data);
 
   await enqueueSourceProcessing({
     sourceId: source.id,
