@@ -7,6 +7,7 @@ import {
   importWebsite,
   importYoutube,
   listSources,
+  retrySource,
   uploadPdf,
 } from "../controllers/sourceController.js";
 import { requireAuth } from "../middleware/requireAuth.js";
@@ -22,5 +23,6 @@ sourceRouter.post("/text-markdown", createTextOrMarkdownSource);
 sourceRouter.post("/pdf", uploadSinglePdf, uploadPdf);
 sourceRouter.post("/website", importWebsite);
 sourceRouter.post("/youtube", importYoutube);
+sourceRouter.post("/:sourceId/retry", retrySource);
 sourceRouter.get("/:sourceId", getSource);
 sourceRouter.delete("/:sourceId", deleteSource);

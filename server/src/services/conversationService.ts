@@ -22,8 +22,10 @@ import { enqueueConversationSummarize } from "../lib/conversationEvents.js";
 import { addMemoriesFromMessages, searchUserMemories } from "../lib/mem0.js";
 import {
   buildConversationSystemPrompt,
+  getWorkspaceSourceOverview,
   retrieveWorkspaceContext,
 } from "../lib/rag/retrieve.js";
+
 import {
   formatTavilyResultsForPrompt,
   searchWeb,
@@ -319,9 +321,10 @@ export async function streamWorkspaceConversation(
     content: userText,
   });
 
-  const [retrievedChunks, userMemories] = await Promise.all([
+  const [retrievedChunks, userMemories, sourceOverview] = await Promise.all([
     retrieveWorkspaceContext(workspaceId, userText),
     searchUserMemories(userId, userText),
+    getWorkspaceSourceOverview(workspaceId),
   ]);
 
   const citations = retrievedChunks.map((chunk) => ({
@@ -339,6 +342,7 @@ export async function streamWorkspaceConversation(
     conversationSummary: conversation.summary,
     userMemories: userMemories.map((memory) => memory.memory),
     webSearchEnabled,
+    sourceOverview,
   });
 
   const contextMessages =

@@ -156,3 +156,33 @@ export async function bulkDeleteSourcesForWorkspace(
     await deleteSourceForWorkspace(workspaceId, sourceId, userId);
   }
 }
+
+/**
+ * Finds sources still queued/processing whose last update is older than the
+ * given cutoff — i.e. events that were probably lost to a worker restart.
+ *
+ * Used by the Inngest `reap-stale-sources` cron function; internal pipelines
+ * only, so no ownership check like the other *ForWorkspace helpers.
+ *
+ * @param staleBefore - Timestamp; anything not updated after this is returned
+ * @returns Up to 50 oldest stale sources with minimal fields
+ *
+ */
+export function findStaleUnprocessedSources(staleBefore: Date) {
+  return prisma.source.findMany({
+    where: {
+      status: { in: ["PENDING", "PROCESSING"] },
+      updatedAt: { lt: staleBefore },
+    },
+    select: {
+      id: true,
+      workspaceId: true,
+      title: true,
+      status: true,
+      metadata: true,
+    },
+    orderBy: { updatedAt: "asc" },
+    take: 50,
+  });
+}
+

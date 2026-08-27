@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
   ArrowLeftIcon,
-  ArrowUpIcon,
   BookOpenIcon,
   CircleHelpIcon,
   FileTextIcon,
@@ -14,7 +13,6 @@ import {
   MoreHorizontalIcon,
   NetworkIcon,
   PencilIcon,
-  SparklesIcon,
   Trash2Icon,
   TriangleAlertIcon,
   type LucideIcon,
@@ -32,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
+import { ChatPanel } from "@/features/conversations/components/chat-panel"
 import { SourcesPanel } from "@/features/sources/components/sources-panel"
 import { DeleteWorkspaceDialog } from "@/features/workspaces/components/delete-workspace-dialog"
 import { WorkspaceDialog } from "@/features/workspaces/components/workspace-dialog"
@@ -39,7 +38,6 @@ import { useWorkspace } from "@/features/workspaces/hooks"
 import {
   CHAT_MODEL_LABELS,
   type ChatModel,
-  type Workspace,
 } from "@/features/workspaces/types"
 
 export default function WorkspacePage() {
@@ -178,43 +176,6 @@ function WorkspaceView({ workspaceId }: { workspaceId: string }) {
         onDeleted={() => router.replace("/")}
       />
     </div>
-  )
-}
-
-function ChatPanel({ workspace }: { workspace: Workspace }) {
-  return (
-    <Panel className="max-lg:min-h-96">
-      <PanelHeader title="Chat">
-        <Badge variant="secondary">
-          {CHAT_MODEL_LABELS[
-            (workspace.defaultModel as ChatModel) ?? "gpt-4o-mini"
-          ] ?? workspace.defaultModel}
-        </Badge>
-      </PanelHeader>
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
-        <span className="flex size-12 items-center justify-center rounded-full bg-brand text-white shadow-xs">
-          <SparklesIcon className="size-5" />
-        </span>
-        <p className="mt-2 font-heading text-2xl font-medium tracking-tight text-balance">
-          Ask {workspace.title} anything
-        </p>
-        <p className="max-w-72 text-base leading-relaxed text-muted-foreground">
-          Answers come with citations pointing back to your sources.
-        </p>
-      </div>
-      <footer className="shrink-0 p-4">
-        <div className="flex items-center gap-2 rounded-full border bg-muted/50 py-2 pr-2 pl-5">
-          <input
-            disabled
-            placeholder="Add a source to start chatting"
-            className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted-foreground"
-          />
-          <Button size="icon" disabled aria-label="Send message">
-            <ArrowUpIcon />
-          </Button>
-        </div>
-      </footer>
-    </Panel>
   )
 }
 

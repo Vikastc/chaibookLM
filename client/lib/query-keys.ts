@@ -13,3 +13,11 @@ export const sourceKeys = {
   detail: (workspaceId: string, sourceId: string) =>
     [...sourceKeys.details(), workspaceId, sourceId] as const,
 }
+
+export const conversationKeys = {
+  all: ["conversations"] as const,
+  lists: (workspaceId: string) =>
+    [...conversationKeys.all, "list", workspaceId] as const,
+  messages: (workspaceId: string, conversationId: string) =>
+    [...conversationKeys.all, "messages", workspaceId, conversationId] as const,
+}

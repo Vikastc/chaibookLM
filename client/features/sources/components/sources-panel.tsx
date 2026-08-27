@@ -11,6 +11,7 @@ import {
   FileTextIcon,
   GlobeIcon,
   PlusIcon,
+  RotateCcwIcon,
   SearchIcon,
   Trash2Icon,
   TriangleAlertIcon,
@@ -38,7 +39,7 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 
-import { useBulkDeleteSources, useDeleteSource, useSources } from "../hooks"
+import { useBulkDeleteSources, useDeleteSource, useRetrySource, useSources } from "../hooks"
 import {
   SOURCE_TYPE_LABELS,
   type Source,
@@ -74,6 +75,7 @@ export function SourcesPanel({ workspaceId }: { workspaceId: string }) {
 
   const deleteMutation = useDeleteSource(workspaceId)
   const bulkDeleteMutation = useBulkDeleteSources(workspaceId)
+  const retryMutation = useRetrySource(workspaceId)
 
   // Selected ids that still exist in the current list (pruned on refetch).
   const activeSelectedIds = useMemo(
@@ -118,6 +120,17 @@ export function SourcesPanel({ workspaceId }: { workspaceId: string }) {
     } catch (err) {
       toast.error(
         err instanceof ApiError ? err.message : "Couldn't delete the sources."
+      )
+    }
+  }
+
+  async function handleRetry(source: Source) {
+    try {
+      await retryMutation.mutateAsync(source.id)
+      toast.success(`Retrying "${source.title}"`)
+    } catch (err) {
+      toast.error(
+        err instanceof ApiError ? err.message : "Couldn't retry the source."
       )
     }
   }
@@ -233,9 +246,14 @@ export function SourcesPanel({ workspaceId }: { workspaceId: string }) {
                 onToggleSelect={() => toggleSelect(source.id)}
                 onOpen={() => setDetailSourceId(source.id)}
                 onDelete={() => handleDelete(source)}
+                onRetry={() => handleRetry(source)}
                 isDeleting={
                   deleteMutation.isPending &&
                   deleteMutation.variables === source.id
+                }
+                isRetrying={
+                  retryMutation.isPending &&
+                  retryMutation.variables === source.id
                 }
               />
             ))}
@@ -296,14 +314,18 @@ function SourceListItem({
   onToggleSelect,
   onOpen,
   onDelete,
+  onRetry,
   isDeleting,
+  isRetrying,
 }: {
   source: Source
   selected: boolean
   onToggleSelect: () => void
   onOpen: () => void
   onDelete: () => void
+  onRetry: () => void
   isDeleting: boolean
+  isRetrying: boolean
 }) {
   const TypeIcon = TYPE_ICONS[source.type]
 
@@ -349,7 +371,26 @@ function SourceListItem({
         </p>
       </button>
 
-      <StatusIndicator status={source.status} />
+      <StatusIndicator
+        status={source.status}
+        reason={source.metadata?.processingError ?? null}
+      />
+
+      {source.status === "FAILED" && (
+        <button
+          type="button"
+          onClick={onRetry}
+          disabled={isRetrying}
+          aria-label={`Retry processing ${source.title}`}
+          className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
+        >
+          {isRetrying ? (
+            <Spinner />
+          ) : (
+            <RotateCcwIcon className="size-3.5" />
+          )}
+        </button>
+      )}
 
       <button
         type="button"
@@ -364,7 +405,13 @@ function SourceListItem({
   )
 }
 
-function StatusIndicator({ status }: { status: SourceStatus }) {
+function StatusIndicator({
+  status,
+  reason,
+}: {
+  status: SourceStatus
+  reason?: string | null
+}) {
   switch (status) {
     case "READY":
       return (
@@ -389,7 +436,14 @@ function StatusIndicator({ status }: { status: SourceStatus }) {
       )
     case "FAILED":
       return (
-        <span title="Processing failed" className="shrink-0">
+        <span
+          title={
+            reason?.trim()
+              ? `${reason} (click the retry button to reprocess)`
+              : "Processing failed"
+          }
+          className="shrink-0"
+        >
           <TriangleAlertIcon className="size-4 text-destructive" />
           <span className="sr-only">Failed</span>
         </span>

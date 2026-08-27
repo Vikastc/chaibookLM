@@ -1,5 +1,8 @@
 import { findChunksBySourceId } from "../services/sourceChunkService.js";
-import { findSourceById } from "../services/sourceService.js";
+import {
+  findSourceById,
+  findStaleUnprocessedSources,
+} from "../services/sourceService.js";
 import { processArtifactById } from "../services/artifactService.js";
 import { summarizeConversationById } from "../controllers/conversationMemController.js";
 
@@ -11,6 +14,7 @@ import {
   markSourceProcessing,
 } from "../controllers/sourceChunkController.js";
 import { inngest } from "./client.js";
+import { STALE_PROCESSING_MINUTES } from "../lib/aiConfig.js";
 
 export const processSource = inngest.createFunction(
   {
@@ -89,4 +93,83 @@ export const generateArtifact = inngest.createFunction(
   },
 );
 
-export const functions = [processSource, summarizeConversation, generateArtifact];
+/**
+ * Transitions a single stuck source to FAILED so the UI surfaces it as
+ * retryable instead of showing an endless PROCESSING spinner.
+ *
+ * Re-checks the status inside the step because the source may legitimately
+ * have finished between the discovery query and this step running.
+ *
+ * @param sourceId - Source to reap
+ * @returns true when the source was transitioned to FAILED, false if it was
+ * already terminal (READY/FAILED) or deleted in the meantime
+ *
+ */
+async function reapSingleSource(sourceId: string): Promise<boolean> {
+  const source = await findSourceById(sourceId);
+
+  if (
+    !source ||
+    (source.status !== "PENDING" && source.status !== "PROCESSING")
+  ) {
+    return false;
+  }
+
+  await markSourceFailed(
+    sourceId,
+    new Error(
+      `Processing did not finish within ${STALE_PROCESSING_MINUTES} minutes — the worker may have been restarted. Retry processing from the sources panel.`,
+    ),
+    source.metadata,
+  );
+
+  return true;
+}
+
+/**
+ * Cron job: marks long-stuck PENDING/PROCESSING sources as FAILED.
+ *
+ * Inngest retries step failures but cannot survive an event lost while the
+ * Express server was down — such sources would spin forever. Runs every 30
+ * minutes; anything unchanged for STALE_PROCESSING_MINUTES is reaped.
+ */
+export const reapStaleSources = inngest.createFunction(
+  {
+    id: "reap-stale-sources",
+    retries: 0,
+    triggers: [{ cron: "*/30 * * * *" }],
+  },
+  async ({ step }) => {
+    const staleBefore = new Date(
+      Date.now() - STALE_PROCESSING_MINUTES * 60_000,
+    );
+
+    const staleSources = await step.run("find-stale-sources", () =>
+      findStaleUnprocessedSources(staleBefore),
+    );
+
+    if (staleSources.length === 0) {
+      return { reapedCount: 0 };
+    }
+
+    const reapedIds: string[] = [];
+
+    for (const source of staleSources) {
+      const reaped = await step.run(`mark-failed-${source.id}`, () =>
+        reapSingleSource(source.id),
+      );
+      if (reaped) {
+        reapedIds.push(source.id);
+      }
+    }
+
+    return { reapedCount: reapedIds.length, ids: reapedIds };
+  },
+);
+
+export const functions = [
+  processSource,
+  summarizeConversation,
+  generateArtifact,
+  reapStaleSources,
+];

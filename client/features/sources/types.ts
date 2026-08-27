@@ -25,6 +25,7 @@ export type SourceMetadata = {
   pageCount?: number
   videoId?: string
   importedFrom?: string
+  processingError?: string
   [key: string]: unknown
 }
 

@@ -20,6 +20,9 @@ app.use(
   cors({
     origin: process.env.CLIENT_URL ?? "http://localhost:3000",
     credentials: true,
+    // Let the browser client read the conversation id returned by the
+    // streaming endpoint when a new conversation is created implicitly.
+    exposedHeaders: ["X-Conversation-Id"],
   }),
 );
 

@@ -45,6 +45,7 @@
     "tsx": "^4.23.11"
   },
   "overrides": {
+    "@types/pg": "8.23.1",
     "mem0ai": {
       "pg": "$pg"
     }

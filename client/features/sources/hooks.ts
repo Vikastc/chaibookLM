@@ -13,6 +13,7 @@ import {
   importWebsite,
   importYoutube,
   listSources,
+  retrySource,
   uploadPdf,
 } from "./api"
 import type { CreateTextSourceInput, ImportUrlInput, Source } from "./types"
@@ -119,6 +120,14 @@ export function useBulkDeleteSources(workspaceId: string) {
   return useMutation({
     mutationFn: (sourceIds: string[]) =>
       bulkDeleteSources(workspaceId, sourceIds),
+    onSuccess: invalidate,
+  })
+}
+
+export function useRetrySource(workspaceId: string) {
+  const invalidate = useInvalidateSources(workspaceId)
+  return useMutation({
+    mutationFn: (sourceId: string) => retrySource(workspaceId, sourceId),
     onSuccess: invalidate,
   })
 }

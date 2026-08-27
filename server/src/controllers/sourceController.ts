@@ -16,8 +16,10 @@ import {
   deleteSourceForWorkspace,
   getSourceForWorkspace,
   listSourcesForWorkspace,
+  updateSourceRecord,
 } from "../services/sourceService.js";
 import { getWorkspaceByIdForUser } from "../services/workspaceService.js";
+import { removeSourceFromIndex } from "./sourceChunkController.js";
 import { scrapeWebsite } from "../lib/firecrawl.js";
 import { uploadPdfToCloudinary } from "../lib/cloudinary.js";
 import { extractPdfFromBuffer } from "../lib/pdf.js";
@@ -235,4 +237,56 @@ export async function importYoutube(req: Request, res: Response) {
   });
 
   res.status(201).json(source);
+}
+
+/**
+ * Re-runs processing for a source stuck in FAILED/PENDING.
+ *
+ * Cleans up partial output from the previous attempt first (Pinecone vectors
+ * plus DB chunk rows) so re-indexing cannot leave duplicates behind, clears
+ * the recorded error, and enqueues a fresh pipeline run.
+ *
+ * @throws {NotFoundError} When the source does not exist in this workspace
+ * @throws {ValidationError} When the source is READY or already PROCESSING
+ */
+export async function retrySource(req: Request, res: Response) {
+  const { workspaceId, sourceId } = parseSourceParams(req.params);
+  const source = await getSourceForWorkspace(
+    workspaceId,
+    sourceId,
+    req.session.user.id,
+  );
+
+  if (source.status === "PROCESSING") {
+    throw new ValidationError("Source is already being processed");
+  }
+
+  if (source.status === "READY") {
+    throw new ValidationError("Source is already processed and ready");
+  }
+
+  // Remove any partial output from a failed attempt so vectors don't pile up.
+  await removeSourceFromIndex(workspaceId, sourceId);
+
+  const metadata =
+    source.metadata &&
+    typeof source.metadata === "object" &&
+    !Array.isArray(source.metadata)
+      ? (source.metadata as Record<string, unknown>)
+      : {};
+
+  const reset = await updateSourceRecord(sourceId, {
+    status: "PENDING",
+    metadata: {
+      ...metadata,
+      processingError: undefined,
+    },
+  });
+
+  await enqueueSourceProcessing({
+    sourceId,
+    workspaceId,
+  });
+
+  res.json(reset);
 }

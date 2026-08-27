@@ -50,6 +50,10 @@ export function deleteSource(workspaceId: string, sourceId: string) {
   return api.delete<void>(`${basePath(workspaceId)}/${sourceId}`)
 }
 
+export function retrySource(workspaceId: string, sourceId: string) {
+  return api.post<Source>(`${basePath(workspaceId)}/${sourceId}/retry`, {})
+}
+
 export function bulkDeleteSources(workspaceId: string, sourceIds: string[]) {
   return api.post<void>(`${basePath(workspaceId)}/bulk-delete`, { sourceIds })
 }
