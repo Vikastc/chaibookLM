@@ -9,7 +9,7 @@ A NotebookLM-style AI workspace: add sources, then chat with an assistant that a
 - **RAG chat** — streaming answers grounded in retrieved source chunks, cited as `[1]`, `[2]`…
 - **Web search toggle** — opt-in current-info lookup via Tavily, cited as `[W1]`, `[W2]`
 - **Memory** — per-user facts via Mem0 plus rolling conversation summaries
-- **Artifacts panel** — generated learning material from workspace sources (WIP)
+- **Studio / artifacts** — generate summaries, key takeaways, flashcards, quizzes, mind maps and reports from your sources
 - **Auth** — Google sign-in (better-auth), per-user data isolation
 
 ## Tech stack

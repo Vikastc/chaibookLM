@@ -3,6 +3,10 @@ import {
   findSourceById,
   findStaleUnprocessedSources,
 } from "../services/sourceService.js";
+import {
+  findStaleUnfinishedArtifacts,
+  reapSingleArtifact,
+} from "../services/artifactService.js";
 import { processArtifactById } from "../services/artifactService.js";
 import { summarizeConversationById } from "../controllers/conversationMemController.js";
 
@@ -127,11 +131,11 @@ async function reapSingleSource(sourceId: string): Promise<boolean> {
 }
 
 /**
- * Cron job: marks long-stuck PENDING/PROCESSING sources as FAILED.
+ * Cron job: marks long-stuck PENDING/PROCESSING sources and artifacts as FAILED.
  *
  * Inngest retries step failures but cannot survive an event lost while the
- * Express server was down — such sources would spin forever. Runs every 30
- * minutes; anything unchanged for STALE_PROCESSING_MINUTES is reaped.
+ * Express server was down — such jobs would spin forever. Anything unchanged
+ * for STALE_PROCESSING_MINUTES is reaped.
  */
 export const reapStaleSources = inngest.createFunction(
   {
@@ -143,23 +147,34 @@ export const reapStaleSources = inngest.createFunction(
     const staleBefore = new Date(
       Date.now() - STALE_PROCESSING_MINUTES * 60_000,
     );
+    const reapedIds: string[] = [];
 
     const staleSources = await step.run("find-stale-sources", () =>
       findStaleUnprocessedSources(staleBefore),
     );
 
-    if (staleSources.length === 0) {
-      return { reapedCount: 0 };
-    }
-
-    const reapedIds: string[] = [];
-
     for (const source of staleSources) {
-      const reaped = await step.run(`mark-failed-${source.id}`, () =>
+      const wasReaped = await step.run(`mark-failed-${source.id}`, () =>
         reapSingleSource(source.id),
       );
-      if (reaped) {
+      if (wasReaped) {
         reapedIds.push(source.id);
+      }
+    }
+
+    // Artifacts share the same failure mode (worker restart mid-generation),
+    // so they get the same treatment in the same cron run.
+    const staleArtifacts = await step.run("find-stale-artifacts", () =>
+      findStaleUnfinishedArtifacts(staleBefore),
+    );
+
+    for (const artifact of staleArtifacts) {
+      const wasReaped = await step.run(
+        `mark-artifact-failed-${artifact.id}`,
+        () => reapSingleArtifact(artifact.id),
+      );
+      if (wasReaped) {
+        reapedIds.push(artifact.id);
       }
     }
 

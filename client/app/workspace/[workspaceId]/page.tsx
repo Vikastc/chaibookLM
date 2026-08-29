@@ -3,23 +3,16 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { toast } from "sonner"
 import {
   ArrowLeftIcon,
   BookOpenIcon,
-  CircleHelpIcon,
-  FileTextIcon,
-  LayersIcon,
   MoreHorizontalIcon,
-  NetworkIcon,
   PencilIcon,
   Trash2Icon,
   TriangleAlertIcon,
-  type LucideIcon,
 } from "lucide-react"
 
 import { useRequireAuth } from "@/hooks/use-require-auth"
-import { Panel, PanelHeader } from "@/components/panel"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -30,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
+import { StudioPanel } from "@/features/artifacts/components/studio-panel"
 import { ChatPanel } from "@/features/conversations/components/chat-panel"
 import { SourcesPanel } from "@/features/sources/components/sources-panel"
 import { DeleteWorkspaceDialog } from "@/features/workspaces/components/delete-workspace-dialog"
@@ -161,7 +155,7 @@ function WorkspaceView({ workspaceId }: { workspaceId: string }) {
       <main className="grid flex-1 gap-4 p-4 lg:min-h-0 lg:grid-cols-[320px_minmax(0,1fr)_320px]">
         <SourcesPanel workspaceId={workspace.id} />
         <ChatPanel workspace={workspace} />
-        <StudioPanel />
+        <StudioPanel workspaceId={workspace.id} />
       </main>
 
       <WorkspaceDialog
@@ -176,40 +170,5 @@ function WorkspaceView({ workspaceId }: { workspaceId: string }) {
         onDeleted={() => router.replace("/")}
       />
     </div>
-  )
-}
-
-const STUDIO_TILES: { icon: LucideIcon; label: string }[] = [
-  { icon: FileTextIcon, label: "Summary" },
-  { icon: LayersIcon, label: "Flashcards" },
-  { icon: CircleHelpIcon, label: "Quiz" },
-  { icon: NetworkIcon, label: "Mind map" },
-]
-
-function StudioPanel() {
-  return (
-    <Panel className="max-lg:min-h-80">
-      <PanelHeader title="Studio" />
-      <div className="grid grid-cols-2 gap-2.5 p-4">
-        {STUDIO_TILES.map(({ icon: Icon, label }) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() =>
-              toast.info(
-                "The studio arrives in Phase 4 — after sources and chat."
-              )
-            }
-            className="flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
-          >
-            <Icon className="size-5 text-muted-foreground" />
-            <span className="text-sm font-medium">{label}</span>
-          </button>
-        ))}
-      </div>
-      <p className="mt-auto px-5 pb-5 text-sm leading-relaxed text-muted-foreground">
-        Generate study material once your sources are ready.
-      </p>
-    </Panel>
   )
 }

@@ -97,6 +97,73 @@ export function findArtifactById(artifactId: string) {
 }
 
 /**
+ * Finds artifacts still queued/processing whose last update is older than the
+ * given cutoff — i.e. generation jobs lost to a worker restart.
+ *
+ * Used by the Inngest `reap-stale-sources` cron function; internal pipelines
+ * only, so no ownership check.
+ *
+ * @param staleBefore - Timestamp; anything not updated after this is returned
+ * @returns Up to 50 oldest stale artifacts with minimal fields
+ *
+ */
+export function findStaleUnfinishedArtifacts(staleBefore: Date) {
+  return prisma.learningArtifact.findMany({
+    where: {
+      status: { in: ["PENDING", "PROCESSING"] },
+      updatedAt: { lt: staleBefore },
+    },
+    select: {
+      id: true,
+      workspaceId: true,
+      title: true,
+      status: true,
+      metadata: true,
+    },
+    orderBy: { updatedAt: "asc" },
+    take: 50,
+  });
+}
+
+/**
+ * Transitions a single stuck artifact to FAILED so the UI surfaces it as
+ * deletable/regenerable instead of showing an endless spinner.
+ *
+ * Re-checks the status first: the artifact may have legitimately finished
+ * between the discovery query and this step running.
+ *
+ * @param artifactId - Artifact to reap
+ * @returns true when the artifact was transitioned to FAILED
+ *
+ */
+export async function reapSingleArtifact(artifactId: string): Promise<boolean> {
+  const artifact = await findArtifactById(artifactId);
+  if (
+    !artifact ||
+    (artifact.status !== "PENDING" && artifact.status !== "PROCESSING")
+  ) {
+    return false;
+  }
+
+  const metadata =
+    artifact.metadata &&
+    typeof artifact.metadata === "object" &&
+    !Array.isArray(artifact.metadata)
+      ? (artifact.metadata as Record<string, unknown>)
+      : {};
+
+  await updateArtifactRecord(artifactId, {
+    status: "FAILED",
+    metadata: {
+      ...metadata,
+      processingError: `Generation did not finish within the expected time — the worker may have been restarted. Delete this artifact and generate it again.`,
+    },
+  });
+
+  return true;
+}
+
+/**
  * Lists all learning artifacts in a workspace.
  *
  * @param workspaceId - Workspace to list artifacts from
