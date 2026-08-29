@@ -46,6 +46,7 @@ import type { Conversation } from "../types"
 import { getConversationMessages } from "../api"
 import { ChatComposer } from "./chat-composer"
 import { ChatMessages } from "./chat-messages"
+import { SourceDetailDialog } from "@/features/sources/components/source-detail-dialog"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"
 
@@ -56,6 +57,9 @@ export function ChatPanel({ workspace }: { workspace: Workspace }) {
   >(null)
   const [webSearch, setWebSearch] = useState(false)
   const [pendingDelete, setPendingDelete] = useState<Conversation | null>(
+    null
+  )
+  const [citationSourceId, setCitationSourceId] = useState<string | null>(
     null
   )
 
@@ -261,7 +265,11 @@ export function ChatPanel({ workspace }: { workspace: Workspace }) {
           </div>
         </div>
       ) : (
-        <ChatMessages messages={messages} status={status} />
+        <ChatMessages
+          messages={messages}
+          status={status}
+          onSelectSource={setCitationSourceId}
+        />
       )}
 
       {error ? (
@@ -305,6 +313,15 @@ export function ChatPanel({ workspace }: { workspace: Workspace }) {
           }}
         />
       </footer>
+
+      <SourceDetailDialog
+        workspaceId={workspace.id}
+        sourceId={citationSourceId}
+        open={citationSourceId !== null}
+        onOpenChange={(open) => {
+          if (!open) setCitationSourceId(null)
+        }}
+      />
 
       <AlertDialog
         open={pendingDelete !== null}

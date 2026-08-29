@@ -4,7 +4,6 @@ import type { ChatStatus, UIMessage } from "ai"
 import { BookOpenIcon, GlobeIcon } from "lucide-react"
 
 import { Bubble, BubbleContent } from "@/components/ui/bubble"
-import { Badge } from "@/components/ui/badge"
 import {
   Message,
   MessageContent,
@@ -18,6 +17,9 @@ import {
   MessageScrollerProvider,
   MessageScrollerViewport,
 } from "@/components/ui/message-scroller"
+
+import { Badge, badgeVariants } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import { Spinner } from "@/components/ui/spinner"
 
 import { getMessageCitations, getMessageText } from "../messages"
@@ -26,21 +28,58 @@ import type { MessageCitation } from "../types"
 type ChatMessagesProps = {
   messages: UIMessage[]
   status: ChatStatus
+  onSelectSource?: (sourceId: string) => void
 }
 
-function CitationChip({ citation }: { citation: MessageCitation }) {
+function CitationChip({
+  citation,
+  onSelectSource,
+}: {
+  citation: MessageCitation
+  onSelectSource?: (sourceId: string) => void
+}) {
   const isWeb = citation.sourceType === "WEB"
-  return (
-    <Badge variant="outline" className="max-w-56 gap-1 font-normal">
+  const title = citation.excerpt
+    ? `${citation.sourceTitle ?? "Source"}${citation.page ? `, page ${citation.page}` : ""}: ${citation.excerpt}`
+    : undefined
+  const content = (
+    <>
       {isWeb ? <GlobeIcon /> : <BookOpenIcon />}
       <span className="truncate">
         {citation.sourceTitle ?? citation.url ?? "Source"}
+        {citation.page ? ` · p.${citation.page}` : ""}
       </span>
-    </Badge>
+    </>
   )
+  const className = cn(badgeVariants({ variant: "outline" }), "max-w-56 gap-1 font-normal")
+  const props = { title, className, children: content }
+
+  // Web citations open the external URL in a new tab.
+  if (isWeb && citation.url) {
+    return (
+      <a href={citation.url} target="_blank" rel="noreferrer" {...props} />
+    )
+  }
+
+  // Workspace citations open the source's detail view.
+  if (citation.sourceId && onSelectSource) {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelectSource(citation.sourceId!)}
+        {...props}
+      />
+    )
+  }
+
+  return <Badge {...props} />
 }
 
-export function ChatMessages({ messages, status }: ChatMessagesProps) {
+export function ChatMessages({
+  messages,
+  status,
+  onSelectSource,
+}: ChatMessagesProps) {
   const isStreaming = status === "streaming"
   const lastMessage = messages[messages.length - 1]
 
@@ -96,6 +135,7 @@ export function ChatMessages({ messages, status }: ChatMessagesProps) {
                                   <CitationChip
                                     key={`${message.id}-citation-${index}`}
                                     citation={citation}
+                                    onSelectSource={onSelectSource}
                                   />
                                 ))}
                               </div>

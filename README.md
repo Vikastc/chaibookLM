@@ -132,5 +132,7 @@ server/
 
 - **Stuck sources self-heal**: anything queued/processing longer than 10 minutes is marked FAILED by the reaper job; failed sources show a ↻ retry button in the Sources panel.
 - **The Pinecone index** (`PINECONE_INDEX`, 1536-dim, cosine, AWS us-east-1 serverless) is created automatically on first use.
+- **Memory scoping**: facts the assistant *learns* while chatting are tagged with the workspace they came from and are only recalled inside that workspace. Notes you add manually on the Memory page stay available everywhere.
 - **Keyboard shortcuts**: `d` toggles light/dark theme (ignored while typing), `⌘/Ctrl+B` toggles the sidebar.
+
 

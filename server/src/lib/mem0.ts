@@ -116,24 +116,60 @@ export async function getUserMemoryById(memoryId: string, userId: string) {
 /**
  * Semantic search over a user's memories for RAG chat context.
  *
+ * When `options.workspaceId` is provided the result is workspace-scoped:
+ * - memories tagged with that `workspaceId` are kept;
+ * - legacy *learned* memories without a workspace tag are excluded (they may
+ *   contain facts absorbed from other workspaces' documents);
+ * - the user's own *manual* notes (never workspace-tagged) are kept everywhere.
+ *
+ * Without `options`, all of the user's memories are returned (used by the
+ * memory-management endpoints).
+ *
  * @param userId - Authenticated user's id
  * @param query - Current user message or search text
- * @returns Top matching memories (up to 8), or `[]` when Mem0 is off or query is empty
+ * @param options - Optional workspace scoping for chat context
+ * @returns Matching memories, or `[]` when Mem0 is off or query is empty
  *
  */
-export async function searchUserMemories(userId: string, query: string) {
+export async function searchUserMemories(
+  userId: string,
+  query: string,
+  options?: { workspaceId?: string },
+) {
   if (!process.env.MEM0_API_KEY?.trim() || !query.trim()) {
     return [];
   }
 
   const results = await getMem0Client().search(query, {
     filters: { user_id: userId },
-    topK: 8,
+    // Ask for extra candidates: workspace scoping may discard some hits.
+    topK: options?.workspaceId ? 16 : 8,
     threshold: 0.1,
   });
 
-  return results.results.map(mapMemory);
+  const memories = results.results.map(mapMemory);
+
+  if (!options?.workspaceId) {
+    return memories;
+  }
+
+  return memories.filter((memory) => {
+    const metadata = memory.metadata as Record<string, unknown> | null | undefined;
+    const memoryWorkspaceId =
+      typeof metadata?.workspaceId === "string"
+        ? metadata.workspaceId
+        : undefined;
+
+    if (memoryWorkspaceId) {
+      return memoryWorkspaceId === options.workspaceId;
+    }
+
+    // No workspace tag: only the user's own manual notes are safe to reuse;
+    // legacy learned memories are excluded (possible other-workspace content).
+    return metadata?.source === "manual";
+  });
 }
+
 
 /**
  * Creates a single user memory (manual or explicit text).

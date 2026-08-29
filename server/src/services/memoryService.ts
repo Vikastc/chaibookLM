@@ -16,8 +16,12 @@ export function listMemoriesForUser(userId: string) {
   return listUserMemories(userId);
 }
 
-export function searchMemoriesForUser(userId: string, query: string) {
-  return searchUserMemories(userId, query);
+export function searchMemoriesForUser(
+  userId: string,
+  query: string,
+  options?: { workspaceId?: string },
+) {
+  return searchUserMemories(userId, query, options);
 }
 
 export async function getMemoryByIdForUser(memoryId: string, userId: string) {

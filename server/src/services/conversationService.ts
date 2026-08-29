@@ -323,7 +323,7 @@ export async function streamWorkspaceConversation(
 
   const [retrievedChunks, userMemories, sourceOverview] = await Promise.all([
     retrieveWorkspaceContext(workspaceId, userText),
-    searchUserMemories(userId, userText),
+    searchUserMemories(userId, userText, { workspaceId }),
     getWorkspaceSourceOverview(workspaceId),
   ]);
 
@@ -382,7 +382,15 @@ export async function streamWorkspaceConversation(
         stopWhen: webSearchEnabled ? isStepCount(3) : undefined,
       });
 
-      writer.merge(toUIMessageStream({ stream: result.stream }));
+      writer.merge(
+        toUIMessageStream({
+          stream: result.stream,
+          // Attach the retrieved citations as message metadata so the client
+          // can render source chips immediately — not only after the message
+          // is reloaded from the database (where onFinish persists them).
+          messageMetadata: () => ({ citations }),
+        }),
+      );
     },
     onFinish: async ({ responseMessage, isAborted }) => {
       if (isAborted) {
@@ -437,6 +445,9 @@ export async function streamWorkspaceConversation(
         {
           source: "learned",
           conversationId: conversation.id,
+          // Tag the workspace so learned facts are never recalled in other
+          // workspaces' chats (they may encode this workspace's documents).
+          workspaceId,
         },
       ).catch((error: unknown) => {
         console.error("Mem0 add failed:", error);

@@ -16,10 +16,12 @@ export type Conversation = {
  * web results carry `url`.
  */
 export type MessageCitation = {
+  sourceId?: string
   sourceType: string
   sourceTitle?: string
   url?: string
   excerpt?: string
+  page?: number
 }
 
 /** Mirrors MessageRecord from server/src/services/messageService.ts. */

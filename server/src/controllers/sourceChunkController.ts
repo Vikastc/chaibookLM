@@ -33,17 +33,12 @@ type SourceMetadata = {
   chunkCount?: number;
   pageCount?: number;
   indexedAt?: string;
+  /** Per-page text captured at upload time (keeps page numbers on chunks). */
+  pages?: string[];
 };
 
 async function extractSourceText(source: SourceRecord) {
-  const text = source.content?.trim();
-  if (text) {
-    return {
-      text,
-      pageCount: undefined,
-      pages: undefined,
-    };
-  }
+  const storedText = source.content?.trim();
 
   if (source.type === "PDF") {
     const metadata =
@@ -53,19 +48,49 @@ async function extractSourceText(source: SourceRecord) {
         ? (source.metadata as SourceMetadata)
         : {};
 
-    if (!metadata.fileUrl) {
-      throw new Error("PDF source is missing fileUrl metadata");
+    // 1. Fastest & most reliable: page text persisted at upload time.
+    if (metadata.pages && metadata.pages.length > 0) {
+      return {
+        text: metadata.pages.filter(Boolean).join("\n\n"),
+        pageCount: metadata.pageCount ?? metadata.pages.length,
+        pages: metadata.pages,
+      };
     }
 
-    const extracted = await extractPdfFromCloudinary({
-      fileUrl: metadata.fileUrl,
-      publicId: metadata.publicId,
-      resourceType: metadata.resourceType ?? "image",
-    });
+    // 2. Re-download from Cloudinary (only works when raw PDF delivery is
+    //    enabled on the account — otherwise falls through).
+    if (metadata.fileUrl) {
+      try {
+        const extracted = await extractPdfFromCloudinary({
+          fileUrl: metadata.fileUrl,
+          publicId: metadata.publicId,
+          resourceType: metadata.resourceType ?? "image",
+        });
+        return {
+          text: extracted.text,
+          pageCount: extracted.pageCount,
+          pages: extracted.pages,
+        };
+      } catch (error) {
+        // Fall back to stored content below (no page granularity).
+        if (!storedText) {
+          throw error;
+        }
+        console.warn(
+          `PDF re-extraction failed for source ${source.id}; using stored content without page numbers:`,
+          error,
+        );
+      }
+    } else if (!storedText) {
+      throw new Error("PDF source is missing fileUrl metadata");
+    }
+  }
+
+  if (storedText) {
     return {
-      text: extracted.text,
-      pageCount: extracted.pageCount,
-      pages: extracted.pages,
+      text: storedText,
+      pageCount: undefined,
+      pages: undefined,
     };
   }
 

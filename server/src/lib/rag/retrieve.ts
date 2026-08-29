@@ -147,7 +147,9 @@ export function buildConversationSystemPrompt(input: {
       .join("\n");
 
     sections.push(
-      "Known facts about this user (use when relevant):",
+      "Personal notes about this user (preferences, goals, context they chose to save).",
+      "Use them for tone and relevance only — they are NOT workspace sources:",
+      "never present them as document content or cite them like [1].",
       memoryBlock,
     );
   }
@@ -212,7 +214,11 @@ export function buildConversationSystemPrompt(input: {
   sections.push(
     "Use ONLY the retrieved context below when making factual claims about their materials.",
     "If the context is insufficient, say so clearly.",
-    "Cite sources inline using [1], [2], etc. matching the numbered context blocks.",
+    "Citation rules (follow strictly):",
+    "- Ground every factual claim in the numbered context blocks.",
+    "- Immediately after each claim, add its marker like [1] or [2] matching the block.",
+    "- Multiple blocks may be cited together, e.g. [1][3].",
+    "- Never invent block numbers; only use the numbers listed under 'Retrieved context:'.",
     "Keep answers concise, accurate, and educational.",
     "",
     "Retrieved context:",

@@ -165,11 +165,16 @@ export async function uploadPdf(req: Request, res: Response) {
 
   let content: string | null = null;
   let pageCount: number | undefined;
+  let pages: string[] | undefined;
 
   try {
     const extracted = await extractPdfFromBuffer(req.file.buffer);
     content = extracted.text;
     pageCount = extracted.pageCount;
+    // Persist per-page text so the processing worker can chunk page-aware
+    // without re-downloading from Cloudinary (raw PDF delivery is blocked by
+    // default on standard Cloudinary accounts).
+    pages = extracted.pages;
   } catch {
     // Inngest will retry extraction from Cloudinary if upload-time parse fails.
   }
@@ -187,6 +192,7 @@ export async function uploadPdf(req: Request, res: Response) {
       publicId: upload.publicId,
       resourceType: upload.resourceType,
       pageCount,
+      ...(pages ? { pages } : {}),
     },
   });
 
