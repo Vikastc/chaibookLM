@@ -5,16 +5,12 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useChat } from "@ai-sdk/react"
 import { DefaultChatTransport, type UIMessage } from "ai"
 import { formatDistanceToNow } from "date-fns"
-import {
-  HistoryIcon,
-  PlusIcon,
-  SparklesIcon,
-  Trash2Icon,
-} from "lucide-react"
+import { HistoryIcon, PlusIcon, SparklesIcon, Trash2Icon } from "lucide-react"
 import { toast } from "sonner"
 
 import { conversationKeys } from "@/lib/query-keys"
 import { ApiError } from "@/lib/api"
+import { cn } from "@/lib/utils"
 import { Panel, PanelHeader } from "@/components/panel"
 import {
   AlertDialog,
@@ -50,18 +46,20 @@ import { SourceDetailDialog } from "@/features/sources/components/source-detail-
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"
 
-export function ChatPanel({ workspace }: { workspace: Workspace }) {
+export function ChatPanel({
+  workspace,
+  className,
+}: {
+  workspace: Workspace
+  className?: string
+}) {
   const queryClient = useQueryClient()
   const [activeConversationId, setActiveConversationId] = useState<
     string | null
   >(null)
   const [webSearch, setWebSearch] = useState(false)
-  const [pendingDelete, setPendingDelete] = useState<Conversation | null>(
-    null
-  )
-  const [citationSourceId, setCitationSourceId] = useState<string | null>(
-    null
-  )
+  const [pendingDelete, setPendingDelete] = useState<Conversation | null>(null)
+  const [citationSourceId, setCitationSourceId] = useState<string | null>(null)
 
   const invalidateLists = useCallback(() => {
     void queryClient.invalidateQueries({
@@ -139,8 +137,7 @@ export function ChatPanel({ workspace }: { workspace: Workspace }) {
     try {
       const rows = await queryClient.fetchQuery({
         queryKey: conversationKeys.messages(workspace.id, conversation.id),
-        queryFn: () =>
-          getConversationMessages(workspace.id, conversation.id),
+        queryFn: () => getConversationMessages(workspace.id, conversation.id),
       })
       setActiveConversationId(conversation.id)
       setMessages(toUIMessages(rows))
@@ -183,7 +180,7 @@ export function ChatPanel({ workspace }: { workspace: Workspace }) {
   }
 
   return (
-    <Panel className="max-lg:min-h-96">
+    <Panel className={cn("bg-card", className)}>
       <PanelHeader title="Chat">
         <div className="flex items-center gap-1.5">
           <Badge variant="secondary" className="hidden sm:inline-flex">
@@ -252,14 +249,14 @@ export function ChatPanel({ workspace }: { workspace: Workspace }) {
 
       {messages.length === 0 ? (
         <div className="grid min-h-0 flex-1 place-items-center p-8 text-center">
-          <div className="flex flex-col items-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-brand text-white shadow-xs">
+          <div className="flex max-w-md flex-col items-center">
+            <span className="flex size-12 items-center justify-center rounded-full text-white shadow-xs bg-brand">
               <SparklesIcon className="size-5" />
             </span>
-            <p className="mt-2 font-heading text-2xl font-medium tracking-tight text-balance">
+            <p className="mt-3 font-sans text-3xl font-semibold tracking-tight text-balance">
               Ask {workspace.title} anything
             </p>
-            <p className="mt-2 max-w-72 text-base leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
               Answers come with citations pointing back to your sources.
             </p>
           </div>
@@ -301,7 +298,7 @@ export function ChatPanel({ workspace }: { workspace: Workspace }) {
         </div>
       ) : null}
 
-      <footer className="shrink-0 p-4 pt-0">
+      <footer className="shrink-0 border-t bg-card/65 p-4 backdrop-blur-sm sm:p-5">
         <ChatComposer
           status={status}
           webSearch={webSearch}

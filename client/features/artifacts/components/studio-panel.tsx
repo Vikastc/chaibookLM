@@ -20,6 +20,7 @@ import {
 import { Panel, PanelHeader } from "@/components/panel"
 import { Spinner } from "@/components/ui/spinner"
 import { ApiError } from "@/lib/api"
+import { cn } from "@/lib/utils"
 import { useSources } from "@/features/sources/hooks"
 
 import { useArtifacts, useCreateArtifact, useDeleteArtifact } from "../hooks"
@@ -40,7 +41,13 @@ const GENERATORS: { type: ArtifactType; icon: LucideIcon; label: string }[] = [
   { type: "REPORT", icon: ClipboardListIcon, label: "Report" },
 ]
 
-export function StudioPanel({ workspaceId }: { workspaceId: string }) {
+export function StudioPanel({
+  workspaceId,
+  className,
+}: {
+  workspaceId: string
+  className?: string
+}) {
   const [selected, setSelected] = useState<Artifact | null>(null)
   const sourcesQuery = useSources(workspaceId)
   const {
@@ -82,28 +89,29 @@ export function StudioPanel({ workspaceId }: { workspaceId: string }) {
   }
 
   return (
-    <Panel className="max-lg:min-h-96">
+    <Panel className={cn("bg-card", className)}>
       <PanelHeader title="Studio" />
 
-      <div className="grid grid-cols-2 gap-2.5 p-4">
+      <div className="grid shrink-0 grid-cols-3 gap-3 p-4 sm:p-5 xl:grid-cols-6 xl:p-7">
         {GENERATORS.map(({ type, icon: Icon, label }) => {
           const isCreating =
-            createMutation.isPending &&
-            createMutation.variables?.type === type
+            createMutation.isPending && createMutation.variables?.type === type
           return (
             <button
               key={type}
               type="button"
               disabled={createMutation.isPending || !canGenerate}
               onClick={() => void handleGenerate(type, label)}
-              className="flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="group flex min-h-24 flex-col items-start justify-between gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:border-primary/40 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-28 sm:p-4"
             >
               {isCreating ? (
                 <Spinner className="size-5 text-muted-foreground" />
               ) : (
-                <Icon className="size-5 text-muted-foreground" />
+                <Icon className="size-5 text-muted-foreground transition-colors group-hover:text-primary" />
               )}
-              <span className="text-sm font-medium">{label}</span>
+              <span className="font-heading text-lg font-medium tracking-tight">
+                {label}
+              </span>
             </button>
           )
         })}
@@ -117,11 +125,11 @@ export function StudioPanel({ workspaceId }: { workspaceId: string }) {
       )}
 
       {artifacts && artifacts.length > 0 && (
-        <div className="border-t px-3 py-3">
+        <div className="min-h-0 flex-1 overflow-y-auto border-t px-3 py-3">
           <p className="px-2 pb-2 text-xs font-medium tracking-wider text-muted-foreground uppercase">
             Generated
           </p>
-          <ul className="grid gap-1.5">
+          <ul className="grid gap-1.5 pb-4">
             {artifacts.map((artifact) => (
               <ArtifactListItem
                 key={artifact.id}

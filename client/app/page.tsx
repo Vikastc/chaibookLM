@@ -103,12 +103,6 @@ function Dashboard({
       </header>
 
       <main className="relative mx-auto w-full max-w-6xl flex-1 px-6 py-12">
-        {/* Soft warm glow behind the greeting */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(60%_100%_at_50%_0%,var(--accent),transparent)] opacity-70"
-        />
-
         <h1 className="font-heading text-4xl font-medium tracking-tight text-balance sm:text-5xl">
           {greeting()}
           {firstName ? `, ${firstName}` : ""}.
@@ -233,7 +227,7 @@ function CreateWorkspaceCard({ onCreate }: { onCreate: () => void }) {
       onClick={onCreate}
       className="group flex min-h-52 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border text-center transition-colors hover:border-primary/50 hover:bg-accent/50 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
     >
-      <span className="flex size-12 items-center justify-center rounded-full bg-brand text-white shadow-xs transition-transform group-hover:scale-105">
+      <span className="flex size-12 items-center justify-center rounded-full text-white shadow-xs transition-transform bg-brand group-hover:scale-105">
         <PlusIcon className="size-6" />
       </span>
       <span className="font-heading text-lg font-medium">New workspace</span>

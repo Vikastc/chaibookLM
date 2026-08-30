@@ -50,7 +50,7 @@ export function ChatComposer({
         event.preventDefault()
         submit()
       }}
-      className="flex flex-col gap-1 rounded-[1.25rem] border bg-muted/50 p-2 transition-colors focus-within:bg-card"
+      className="mx-auto flex w-full max-w-4xl flex-col gap-1 rounded-lg border bg-card p-2.5 transition-colors focus-within:border-primary/60"
     >
       <textarea
         ref={textareaRef}
@@ -70,22 +70,35 @@ export function ChatComposer({
             submit()
           }
         }}
-        placeholder="Ask anything about your sources…"
+        placeholder="Ask a question about your sources"
         aria-label="Message input"
-        className="max-h-40 min-h-9 resize-none bg-transparent px-3 py-2 text-base leading-relaxed outline-none placeholder:text-muted-foreground"
+        className="max-h-40 min-h-11 resize-none bg-transparent px-3 py-2.5 text-[15px] leading-relaxed outline-none placeholder:text-muted-foreground sm:text-base"
       />
-      <div className="flex items-center justify-between gap-2 pl-1.5">
+      <div className="flex items-center justify-between gap-2 border-t px-1.5 pt-1.5">
         <Button
           type="button"
-          variant="ghost"
-          size="icon-sm"
+          variant={webSearch ? "secondary" : "ghost"}
+          size="sm"
           aria-pressed={webSearch}
-          aria-label="Toggle web search"
-          title={webSearch ? "Web search enabled" : "Search the web"}
-          className={cn(webSearch && "bg-accent text-accent-foreground")}
+          aria-label={webSearch ? "Disable web search" : "Enable web search"}
+          title={
+            webSearch
+              ? "Web search is on"
+              : "Search your workspace sources only"
+          }
+          className={cn(
+            "rounded-full px-3 text-xs",
+            webSearch
+              ? "bg-accent text-accent-foreground shadow-sm"
+              : "text-muted-foreground"
+          )}
           onClick={() => onWebSearchChange(!webSearch)}
         >
           <GlobeIcon />
+          <span>Web search</span>
+          <span className="hidden text-[10px] font-semibold tracking-wide sm:inline">
+            {webSearch ? "ON" : "OFF"}
+          </span>
         </Button>
         {busy ? (
           <Button

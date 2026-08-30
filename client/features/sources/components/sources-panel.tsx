@@ -39,7 +39,12 @@ import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
 
-import { useBulkDeleteSources, useDeleteSource, useRetrySource, useSources } from "../hooks"
+import {
+  useBulkDeleteSources,
+  useDeleteSource,
+  useRetrySource,
+  useSources,
+} from "../hooks"
 import {
   SOURCE_TYPE_LABELS,
   type Source,
@@ -57,7 +62,13 @@ const TYPE_ICONS: Record<SourceType, LucideIcon> = {
   MARKDOWN: FileCodeIcon,
 }
 
-export function SourcesPanel({ workspaceId }: { workspaceId: string }) {
+export function SourcesPanel({
+  workspaceId,
+  className,
+}: {
+  workspaceId: string
+  className?: string
+}) {
   const [addOpen, setAddOpen] = useState(false)
   const [search, setSearch] = useState("")
   const debouncedSearch = useDebouncedValue(search, 300)
@@ -135,15 +146,16 @@ export function SourcesPanel({ workspaceId }: { workspaceId: string }) {
     }
   }
 
-  const detailSource = sources?.find((s) => s.id === detailSourceId)
+  const sourceList = sources ?? []
+  const detailSource = sourceList.find((s) => s.id === detailSourceId)
 
   return (
-    <Panel className="max-lg:max-h-[30rem]">
+    <Panel className={cn("bg-card", className)}>
       <PanelHeader title="Sources">
         <div className="flex items-center gap-2">
-          {sources && sources.length > 0 && (
+          {sourceList.length > 0 && (
             <span className="text-xs font-medium text-muted-foreground">
-              {sources.length}
+              {sourceList.length}
             </span>
           )}
           <Button size="sm" onClick={() => setAddOpen(true)}>
@@ -208,7 +220,7 @@ export function SourcesPanel({ workspaceId }: { workspaceId: string }) {
               Try again
             </Button>
           </div>
-        ) : sources.length === 0 ? (
+        ) : sourceList.length === 0 ? (
           debouncedSearch ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
               Nothing matches &ldquo;{debouncedSearch}&rdquo;
@@ -238,7 +250,7 @@ export function SourcesPanel({ workspaceId }: { workspaceId: string }) {
           )
         ) : (
           <ul className="grid gap-1.5">
-            {sources.map((source) => (
+            {sourceList.map((source) => (
               <SourceListItem
                 key={source.id}
                 source={source}
@@ -384,11 +396,7 @@ function SourceListItem({
           aria-label={`Retry processing ${source.title}`}
           className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none"
         >
-          {isRetrying ? (
-            <Spinner />
-          ) : (
-            <RotateCcwIcon className="size-3.5" />
-          )}
+          {isRetrying ? <Spinner /> : <RotateCcwIcon className="size-3.5" />}
         </button>
       )}
 

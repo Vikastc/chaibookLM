@@ -1,7 +1,7 @@
 "use client"
 
 import { format } from "date-fns"
-import { ExternalLinkIcon } from "lucide-react"
+import { ArrowLeftIcon, ExternalLinkIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -57,80 +57,98 @@ export function SourceDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="gap-5 p-5 sm:max-w-2xl">
+      <DialogContent
+        className="!inset-0 !h-svh !max-w-none !translate-x-0 !translate-y-0 gap-0 overflow-hidden rounded-none border-0 p-0 shadow-none"
+        showCloseButton={false}
+      >
         {!source ? (
-          <div className="grid gap-3">
+          <div className="m-auto grid w-full max-w-4xl gap-3 p-6">
             <Skeleton className="h-6 w-2/3" />
             <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-64 rounded-xl" />
+            <Skeleton className="h-[60svh] rounded-2xl" />
           </div>
         ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle className="pr-8 font-heading text-xl text-balance">
-                {source.title}
-              </DialogTitle>
-              <DialogDescription>
-                {SOURCE_TYPE_LABELS[source.type]} · added{" "}
-                {format(new Date(source.createdAt), "MMM d, yyyy")} ·{" "}
-                {STATUS_LABELS[source.status]}
-              </DialogDescription>
-            </DialogHeader>
+          <div className="flex h-full min-h-0 flex-col">
+            <header className="flex shrink-0 items-center gap-4 border-b bg-card/80 px-4 py-3 backdrop-blur-xl sm:px-8">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                aria-label="Back to sources"
+              >
+                <ArrowLeftIcon className="size-4" />
+              </button>
+              <DialogHeader className="min-w-0 gap-0.5">
+                <DialogTitle className="truncate font-heading text-lg font-medium sm:text-xl">
+                  {source.title}
+                </DialogTitle>
+                <DialogDescription className="truncate text-xs">
+                  {SOURCE_TYPE_LABELS[source.type]} · added{" "}
+                  {format(new Date(source.createdAt), "MMM d, yyyy")} ·{" "}
+                  {STATUS_LABELS[source.status]}
+                </DialogDescription>
+              </DialogHeader>
+            </header>
 
-            {/* Metadata facts */}
-            <dl className="grid gap-2 text-sm">
-              {source.url && (
-                <div className="flex items-center gap-2">
-                  <dt className="shrink-0 text-muted-foreground">Link</dt>
-                  <dd className="min-w-0">
-                    <a
-                      href={source.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="truncate text-primary underline underline-offset-4 hover:text-primary/80"
+            <main className="min-h-0 flex-1 overflow-y-auto">
+              <div className="mx-auto grid w-full max-w-5xl gap-7 px-5 py-8 sm:px-10 sm:py-12">
+                <dl className="grid gap-2 rounded-2xl border bg-muted/35 p-4 text-sm sm:grid-cols-2">
+                  {source.url && (
+                    <div className="flex items-center gap-2">
+                      <dt className="shrink-0 text-muted-foreground">Link</dt>
+                      <dd className="min-w-0">
+                        <a
+                          href={source.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="truncate text-primary underline underline-offset-4 hover:text-primary/80"
+                        >
+                          {source.url}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                  {source.metadata?.fileName && (
+                    <div className="flex items-center gap-2">
+                      <dt className="shrink-0 text-muted-foreground">File</dt>
+                      <dd className="truncate">
+                        {source.metadata.fileName}
+                        {source.metadata.fileSize
+                          ? ` · ${formatBytes(source.metadata.fileSize)}`
+                          : ""}
+                        {source.metadata.pageCount
+                          ? ` · ${source.metadata.pageCount} pages`
+                          : ""}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+
+                <article className="rounded-2xl border bg-card p-5 sm:p-8">
+                  <p className="text-sm leading-7 whitespace-pre-wrap sm:text-base">
+                    {source.content?.trim() ||
+                      "Content will appear here once processing finishes."}
+                  </p>
+                </article>
+
+                {link && (
+                  <div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      nativeButton={false}
+                      render={
+                        <a href={link} target="_blank" rel="noreferrer" />
+                      }
                     >
-                      {source.url}
-                    </a>
-                  </dd>
-                </div>
-              )}
-              {source.metadata?.fileName && (
-                <div className="flex items-center gap-2">
-                  <dt className="shrink-0 text-muted-foreground">File</dt>
-                  <dd className="truncate">
-                    {source.metadata.fileName}
-                    {source.metadata.fileSize
-                      ? ` · ${formatBytes(source.metadata.fileSize)}`
-                      : ""}
-                    {source.metadata.pageCount
-                      ? ` · ${source.metadata.pageCount} pages`
-                      : ""}
-                  </dd>
-                </div>
-              )}
-            </dl>
-
-            <div className="max-h-80 overflow-y-auto rounded-xl bg-muted/50 p-4">
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {source.content?.trim() ||
-                  "Content will appear here once processing finishes."}
-              </p>
-            </div>
-
-            {link && (
-              <div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  nativeButton={false}
-                  render={<a href={link} target="_blank" rel="noreferrer" />}
-                >
-                  <ExternalLinkIcon />
-                  Open original
-                </Button>
+                      <ExternalLinkIcon />
+                      Open original
+                    </Button>
+                  </div>
+                )}
               </div>
-            )}
-          </>
+            </main>
+          </div>
         )}
       </DialogContent>
     </Dialog>

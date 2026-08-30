@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils"
 
-/** Floating panel used by the workspace three-column layout. */
+/** Primary workspace surface. */
 export function Panel({
   children,
   className,
@@ -9,7 +9,7 @@ export function Panel({
   return (
     <section
       className={cn(
-        "flex min-h-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-2xs",
+        "flex min-h-0 flex-col overflow-hidden border bg-card",
         className
       )}
       {...props}
@@ -28,9 +28,7 @@ export function PanelHeader({
 }) {
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-5">
-      <h2 className="truncate font-heading text-base font-medium tracking-tight">
-        {title}
-      </h2>
+      <h2 className="truncate text-sm font-semibold">{title}</h2>
       {children}
     </header>
   )
