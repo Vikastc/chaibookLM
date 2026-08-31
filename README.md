@@ -78,6 +78,57 @@ npx inngest-cli@latest dev -u http://localhost:8080/api/inngest
 
 Then open **http://localhost:3001** and sign in with Google.
 
+## Deploy on Vercel
+
+This repository is ready to deploy as two small Vercel projects. Keeping the
+Next.js site and Express API separate keeps the existing architecture intact;
+the site proxies browser requests through its own `/api` path, so users still
+have one origin for chat, sources, and authentication.
+
+1. Push this repository to GitHub. In Vercel, import it twice:
+   - **Chaibook web**: set the Root Directory to `client`.
+   - **Chaibook API**: set the Root Directory to `server`.
+2. Deploy the API first and note its production URL, for example
+   `https://chaibook-api.vercel.app`.
+3. Set the API project's production environment variables. Copy the names from
+   `server/.env.example`, then set these production values in particular:
+   - `CLIENT_URL=https://YOUR_APP_DOMAIN`
+   - `BETTER_AUTH_URL=https://YOUR_APP_DOMAIN`
+   - `DATABASE_URL` to a pooled, serverless-compatible PostgreSQL connection
+     string (e.g. Neon / Supabase / Vercel Postgres pooled URL).
+   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+   - `INNGEST_EVENT_KEY` and `INNGEST_SIGNING_KEY` from the Inngest Vercel
+     integration. Set `INNGEST_SERVE_ORIGIN` to the API project's URL.
+4. In Google Cloud Console, add
+   `https://YOUR_APP_DOMAIN/api/auth/callback/google` as an authorized redirect
+   URI. Keep the same `BETTER_AUTH_SECRET` for all API deployments that share
+   user sessions.
+5. Set `API_ORIGIN=https://YOUR_API_DOMAIN` in the **web** Vercel project.
+   Do not set `NEXT_PUBLIC_API_URL` in production: the app will use the
+   same-origin `/api` proxy automatically.
+6. Run database migrations against the production database before the first
+   release and whenever a migration is added:
+
+   ```bash
+   cd server
+   DATABASE_URL='your-production-database-url' npx prisma migrate deploy
+   ```
+
+7. Add your custom domain to the web project, make it the production domain,
+   then update `CLIENT_URL`, `BETTER_AUTH_URL`, and the Google redirect URI to
+   that exact HTTPS origin. Redeploy both projects after changing these values.
+
+### Launch checklist
+
+- Verify Google sign-in, sign-out, and a page refresh after sign-in.
+- Upload a PDF smaller than **4 MB**; the limit is intentionally below Vercel's
+  request-body ceiling. Use direct-to-storage uploads before raising it.
+- Ask a streaming chat question, enable web search, and generate one artifact.
+- Confirm Inngest shows the API endpoint at `/api/inngest` as connected and a
+  source-processing job completes.
+- Enable Vercel Observability and keep preview deployments protected. Keep API
+  keys in Vercel environment variables only—never in `NEXT_PUBLIC_*` variables.
+
 ## Environment variables
 
 ### `server/.env`
@@ -92,8 +143,8 @@ Then open **http://localhost:3001** and sign in with Google.
 | `OPENAI_API_KEY`                            | ✅       | Chat models + embeddings                          |
 | `PINECONE_API_KEY`                          | ✅       | Vector store (index auto-created)                 |
 | `PINECONE_INDEX`                            | ➖       | Index name (default `chaibook`)                   |
-| `CLOUDINARY_URL`                            | ✅       | PDF storage (`cloudinary://key:secret@cloud`)     |
-| `CLOUDINARY_API_KEY` / `_SECRET`            | ➖       | Signing downloads if PDFs are access-restricted   |
+| `CLOUDINARY_CLOUD_NAME`                     | ✅       | PDF storage (Cloudinary dashboard → Product Environment Credentials) |
+| `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | ✅    | Used together with the cloud name for uploads + signed downloads |
 | `INNGEST_DEV`                               | ➖       | `1` enables dev-mode event signing                |
 | `FIRECRAWL_API_KEY`                         | ➖       | Website import                                    |
 | `TAVILY_API_KEY`                            | ➖       | Web search toggle in chat                         |
@@ -134,5 +185,4 @@ server/
 - **The Pinecone index** (`PINECONE_INDEX`, 1536-dim, cosine, AWS us-east-1 serverless) is created automatically on first use.
 - **Memory scoping**: facts the assistant *learns* while chatting are tagged with the workspace they came from and are only recalled inside that workspace. Notes you add manually on the Memory page stay available everywhere.
 - **Keyboard shortcuts**: `d` toggles light/dark theme (ignored while typing), `⌘/Ctrl+B` toggles the sidebar.
-
 

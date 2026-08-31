@@ -16,6 +16,10 @@ import { functions } from "./inngest/index.js";
 const app = express();
 const port = process.env.PORT ?? 8080;
 
+// Trust Vercel's proxy so secure cookies and request protocol are evaluated
+// correctly once the API runs behind HTTPS.
+app.set("trust proxy", 1);
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL ?? "http://localhost:3000",
@@ -47,6 +51,10 @@ app.get("/health", (_req, res) => {
 
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`Server running on <http://localhost>:${port}`);
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(port, () => {
+    console.log(`Server running on <http://localhost>:${port}`);
+  });
+}
+
+export default app;

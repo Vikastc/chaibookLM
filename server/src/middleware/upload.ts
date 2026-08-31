@@ -1,6 +1,8 @@
 import multer from "multer";
 
-const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024;
+// Vercel Functions accept request bodies up to 4.5 MB. Keep a margin for
+// multipart overhead so uploads fail consistently before reaching the host.
+const MAX_PDF_SIZE_BYTES = 4 * 1024 * 1024;
 
 export const pdfUpload = multer({
   storage: multer.memoryStorage(),

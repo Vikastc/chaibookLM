@@ -36,7 +36,9 @@ import {
   useUploadPdf,
 } from "../hooks"
 
-const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024
+// Vercel Functions accept request bodies up to 4.5 MB. Leave room for
+// multipart form data so the published app has a dependable upload limit.
+const MAX_PDF_SIZE_BYTES = 4 * 1024 * 1024
 
 type SourceKind = "PDF" | "WEBSITE" | "YOUTUBE" | "TEXT"
 
@@ -166,7 +168,7 @@ function PdfForm({
       return
     }
     if (candidate.size > MAX_PDF_SIZE_BYTES) {
-      setError("PDFs up to 10 MB are supported.")
+      setError("PDFs up to 4 MB are supported.")
       return
     }
     setError(null)
@@ -231,7 +233,7 @@ function PdfForm({
             <span className="text-sm font-medium">
               Drop a PDF here, or click to browse
             </span>
-            <span className="text-xs text-muted-foreground">Up to 10 MB</span>
+            <span className="text-xs text-muted-foreground">Up to 4 MB</span>
           </>
         )}
       </button>

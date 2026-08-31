@@ -1,3 +1,11 @@
+# This file starts a local Postgres instance only — useful when you want to run
+# the Express server with `npm run dev` (not Docker) but still need a database.
+#
+# To run the FULL stack (postgres + server + client) use the root-level
+# docker-compose.yml instead:
+#
+#   cd ..  &&  docker compose up --build
+
 services:
   postgres:
     image: postgres:16-alpine
