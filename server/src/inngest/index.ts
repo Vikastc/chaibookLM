@@ -141,7 +141,7 @@ export const reapStaleSources = inngest.createFunction(
   {
     id: "reap-stale-sources",
     retries: 0,
-    triggers: [{ cron: "*/30 * * * *" }],
+    triggers: [{ cron: "*/10 * * * *" }],
   },
   async ({ step }) => {
     const staleBefore = new Date(
