@@ -44,7 +44,9 @@ import { ChatComposer } from "./chat-composer"
 import { ChatMessages } from "./chat-messages"
 import { SourceDetailDialog } from "@/features/sources/components/source-detail-dialog"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ??
+  (process.env.NODE_ENV === "production" ? "" : "http://localhost:8080")
 
 export function ChatPanel({
   workspace,
