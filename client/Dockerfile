@@ -13,6 +13,12 @@ WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# API_ORIGIN is read by next.config.ts at build time to compile the /api/*
+# proxy rewrite into the standalone bundle. In Docker this is the internal
+# service name; on Vercel it is set via the project environment variable.
+ARG API_ORIGIN
+ENV API_ORIGIN=$API_ORIGIN
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 

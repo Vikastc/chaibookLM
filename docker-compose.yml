@@ -62,12 +62,12 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        # Passed at build time so the Next.js bundle knows the API URL
-        NEXT_PUBLIC_API_URL: http://localhost:8080
+        # Bakes the proxy rewrite into the Next.js bundle at build time.
+        # "server" resolves to the Express container on Docker's internal network.
+        # The browser always talks to localhost:3001; Next.js proxies /api/* internally.
+        API_ORIGIN: http://server:8080
     container_name: chaibooklm-client
     restart: unless-stopped
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8080
     ports:
       - "3001:3001"
     depends_on:
