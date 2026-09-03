@@ -31,6 +31,8 @@ import {
   type ArtifactType,
 } from "../types"
 import { ArtifactViewDialog } from "./artifact-view-dialog"
+import { useUserQuota } from "@/hooks/use-user-quota"
+import { QuotaBanner } from "@/features/conversations/components/quota-banner"
 
 const GENERATORS: { type: ArtifactType; icon: LucideIcon; label: string }[] = [
   { type: "SUMMARY", icon: FileTextIcon, label: "Summary" },
@@ -58,12 +60,17 @@ export function StudioPanel({
   } = useArtifacts(workspaceId)
   const createMutation = useCreateArtifact(workspaceId)
   const deleteMutation = useDeleteArtifact(workspaceId)
+  const { data: userQuota } = useUserQuota()
 
   const readySourceCount =
     sourcesQuery.data?.filter((source) => source.status === "READY").length ?? 0
   const canGenerate = readySourceCount > 0
 
   async function handleGenerate(type: ArtifactType, label: string) {
+    if (userQuota?.isExhausted) {
+      toast.error("You have reached your free token limit.")
+      return
+    }
     try {
       await createMutation.mutateAsync({ type })
       toast.success(`Generating ${label.toLowerCase()}…`)
@@ -92,6 +99,8 @@ export function StudioPanel({
     <Panel className={cn("bg-card", className)}>
       <PanelHeader title="Studio" />
 
+      {userQuota?.isExhausted ? <QuotaBanner className="m-4 mb-0" /> : null}
+
       <div className="grid shrink-0 grid-cols-3 gap-3 p-4 sm:p-5 xl:grid-cols-6 xl:p-7">
         {GENERATORS.map(({ type, icon: Icon, label }) => {
           const isCreating =
@@ -100,7 +109,7 @@ export function StudioPanel({
             <button
               key={type}
               type="button"
-              disabled={createMutation.isPending || !canGenerate}
+              disabled={createMutation.isPending || !canGenerate || userQuota?.isExhausted}
               onClick={() => void handleGenerate(type, label)}
               className="group flex min-h-24 flex-col items-start justify-between gap-3 rounded-lg border bg-card p-3 text-left transition-colors hover:border-primary/40 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-28 sm:p-4"
             >

@@ -252,6 +252,7 @@ export async function createArtifactForWorkspace(
   await enqueueArtifactGeneration({
     artifactId: artifact.id,
     workspaceId,
+    userId,
   });
 
   return artifact;
@@ -287,12 +288,13 @@ export async function deleteArtifactForWorkspace(
  * ```
  *
  * @param artifactId - Artifact to generate content for
+ * @param userId - Owner of the artifact (used for token quota enforcement)
  * @returns Updated artifact with `READY` status and generated content
  * @throws When the artifact is missing or generation fails (status set to `FAILED`)
  *
  *
  */
-export async function processArtifactById(artifactId: string) {
+export async function processArtifactById(artifactId: string, userId: string) {
   const artifact = await findArtifactById(artifactId);
   if (!artifact) {
     throw new Error("Artifact not found");
@@ -306,7 +308,7 @@ export async function processArtifactById(artifactId: string) {
       artifact.sourceIds,
     );
 
-    const content = await generateArtifactContent(artifact.type, context.text);
+    const content = await generateArtifactContent(artifact.type, context.text, userId);
 
     return updateArtifactRecord(artifactId, {
       status: "READY",

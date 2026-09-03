@@ -1,7 +1,10 @@
 import { Inngest } from "inngest";
 
 // Create a client to send and receive events
-export const inngest = new Inngest({ id: "chaibook" });
+export const inngest = new Inngest({
+  id: "chaibook",
+  baseUrl: process.env.INNGEST_BASE_URL,
+});
 
 export type SourceCreatedEvent = {
   name: "source/created";

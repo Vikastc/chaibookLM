@@ -24,7 +24,7 @@ export function Wordmark({ className }: { className?: string }) {
       )}
     >
       <LogoMark className="size-7 rounded-lg [&_svg]:size-4" />
-      chaibook
+      RAG Studio
     </span>
   )
 }

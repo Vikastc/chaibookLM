@@ -53,6 +53,8 @@ import {
 } from "../types"
 import { AddSourceDialog } from "./add-source-dialog"
 import { SourceDetailDialog } from "./source-detail-dialog"
+import { useUserQuota } from "@/hooks/use-user-quota"
+import { QuotaBanner } from "@/features/conversations/components/quota-banner"
 
 const TYPE_ICONS: Record<SourceType, LucideIcon> = {
   PDF: FileTextIcon,
@@ -87,6 +89,7 @@ export function SourcesPanel({
   const deleteMutation = useDeleteSource(workspaceId)
   const bulkDeleteMutation = useBulkDeleteSources(workspaceId)
   const retryMutation = useRetrySource(workspaceId)
+  const { data: userQuota } = useUserQuota()
 
   // Selected ids that still exist in the current list (pruned on refetch).
   const activeSelectedIds = useMemo(
@@ -130,12 +133,18 @@ export function SourcesPanel({
       setBulkConfirmOpen(false)
     } catch (err) {
       toast.error(
-        err instanceof ApiError ? err.message : "Couldn't delete the sources."
+        err instanceof ApiError
+          ? err.message
+          : "Couldn't delete the selected sources."
       )
     }
   }
 
   async function handleRetry(source: Source) {
+    if (userQuota?.isExhausted) {
+      toast.error("You have reached your free token limit.")
+      return
+    }
     try {
       await retryMutation.mutateAsync(source.id)
       toast.success(`Retrying "${source.title}"`)
@@ -158,12 +167,18 @@ export function SourcesPanel({
               {sourceList.length}
             </span>
           )}
-          <Button size="sm" onClick={() => setAddOpen(true)}>
+          <Button
+            size="sm"
+            disabled={userQuota?.isExhausted}
+            onClick={() => setAddOpen(true)}
+          >
             <PlusIcon />
             Add
           </Button>
         </div>
       </PanelHeader>
+
+      {userQuota?.isExhausted ? <QuotaBanner className="m-3 mb-0" /> : null}
 
       <div className="shrink-0 border-b px-3 py-2.5">
         <div className="relative">

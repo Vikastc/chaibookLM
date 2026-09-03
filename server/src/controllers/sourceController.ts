@@ -26,6 +26,7 @@ import { extractPdfFromBuffer } from "../lib/pdf.js";
 import { fetchYoutubeTranscript } from "../lib/youtube.js";
 import { parseWorkspaceId } from "./workspaceController.js";
 import { enqueueSourceProcessing } from "../lib/sourceEvents.js";
+import { checkQuota } from "../lib/quota.js";
 
 function parseSourceParams(params: Request["params"]) {
   const parsed = sourceIdParamSchema.safeParse(params);
@@ -117,6 +118,7 @@ export async function createTextOrMarkdownSource(req: Request, res: Response) {
   const { workspaceId } = parseWorkspaceId(req.params);
   const input = parseCreateBody(req.body);
 
+  await checkQuota(req.session.user.id);
   await getWorkspaceByIdForUser(workspaceId, req.session.user.id);
 
   const source = await createAndProcessSource({
@@ -156,6 +158,7 @@ export async function uploadPdf(req: Request, res: Response) {
 
   const title = typeof req.body.title === "string" ? req.body.title : undefined;
 
+  await checkQuota(req.session.user.id);
   await getWorkspaceByIdForUser(workspaceId, req.session.user.id);
 
   const upload = await uploadPdfToCloudinary(
@@ -203,6 +206,7 @@ export async function importWebsite(req: Request, res: Response) {
   const { workspaceId } = workspaceIdParamSchema.parse(req.params);
   const input = importWebsiteSchema.parse(req.body);
 
+  await checkQuota(req.session.user.id);
   await getWorkspaceByIdForUser(workspaceId, req.session.user.id);
 
   const scraped = await scrapeWebsite(input.url);
@@ -226,6 +230,7 @@ export async function importYoutube(req: Request, res: Response) {
   const { workspaceId } = workspaceIdParamSchema.parse(req.params);
   const input = importYoutubeSchema.parse(req.body);
 
+  await checkQuota(req.session.user.id);
   await getWorkspaceByIdForUser(workspaceId, req.session.user.id);
 
   const transcript = await fetchYoutubeTranscript(input.url);
@@ -257,6 +262,9 @@ export async function importYoutube(req: Request, res: Response) {
  */
 export async function retrySource(req: Request, res: Response) {
   const { workspaceId, sourceId } = parseSourceParams(req.params);
+
+  await checkQuota(req.session.user.id);
+
   const source = await getSourceForWorkspace(
     workspaceId,
     sourceId,

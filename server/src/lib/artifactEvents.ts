@@ -7,13 +7,14 @@ import { inngest } from "../inngest/client.js";
 /**
  * Enqueues an artifact generation job to run asynchronously via Inngest.
  *
- * @param input - Artifact and workspace ids for the worker
+ * @param input - Artifact and workspace ids for the worker, plus the user id for quota tracking
  * @returns Resolves when the event is accepted by Inngest
  *
  */
 export async function enqueueArtifactGeneration(input: {
   artifactId: string;
   workspaceId: string;
+  userId: string;
 }) {
   await inngest.send({
     name: "artifact/generate",

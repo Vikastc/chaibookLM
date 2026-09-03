@@ -89,9 +89,9 @@ export const generateArtifact = inngest.createFunction(
     triggers: [{ event: "artifact/generate" }],
   },
   async ({ event, step }) => {
-    const { artifactId } = event.data;
+    const { artifactId, userId } = event.data;
 
-    await step.run("generate", () => processArtifactById(artifactId));
+    await step.run("generate", () => processArtifactById(artifactId, userId));
 
     return { artifactId, status: "READY" };
   },

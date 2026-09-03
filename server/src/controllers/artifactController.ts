@@ -5,6 +5,7 @@ import {
   getArtifactForWorkspace,
   listArtifactsForWorkspace,
 } from "../services/artifactService.js";
+import { checkQuota } from "../lib/quota.js";
 import { ValidationError } from "../types/errors.js";
 import { getZodFieldErrors } from "../utils/zod-error.js";
 import {
@@ -61,6 +62,9 @@ export async function getArtifact(req: Request, res: Response) {
 export async function createArtifact(req: Request, res: Response) {
   const { workspaceId } = parseWorkspaceId(req.params);
   const input = parseCreateBody(req.body);
+
+  await checkQuota(req.session.user.id);
+
   const artifact = await createArtifactForWorkspace(
     workspaceId,
     req.session.user.id,

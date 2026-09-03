@@ -31,6 +31,8 @@ import {
   searchWeb,
   type TavilySearchResponse,
 } from "../lib/tavily.js";
+import { moderateInput } from "../lib/moderation.js";
+import { checkQuota, recordTokenUsage } from "../lib/quota.js";
 import { NotFoundError, ValidationError } from "../types/errors.js";
 import {
   buildConversationTitle,
@@ -309,6 +311,11 @@ export async function streamWorkspaceConversation(
     throw new ValidationError("A user message is required");
   }
 
+  // 1. Screen for harmful content — free, no tokens spent
+  await moderateInput(userText);
+  // 2. Enforce lifetime token budget before starting any generation
+  await checkQuota(userId);
+
   const conversation = await resolveConversation(
     workspaceId,
     input.conversationId,
@@ -380,6 +387,14 @@ export async function streamWorkspaceConversation(
         messages: await convertToModelMessages(contextMessages),
         tools,
         stopWhen: webSearchEnabled ? isStepCount(3) : undefined,
+        onFinish: async ({ usage }) => {
+          // Record actual tokens consumed — fire-and-forget, don't block the stream
+          void recordTokenUsage(userId, usage.totalTokens).catch(
+            (error: unknown) => {
+              console.error("Token usage recording failed:", error);
+            },
+          );
+        },
       });
 
       writer.merge(

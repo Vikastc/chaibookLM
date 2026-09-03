@@ -124,7 +124,7 @@ export function buildConversationSystemPrompt(input: {
   sourceOverview?: SourceOverviewItem[];
 }) {
   const sections: string[] = [
-    "You are Chaibook, an assistant that helps users learn from their workspace sources.",
+    "You are RAG Studio, an expert research assistant that helps users learn from their workspace sources.",
     // The chat UI renders assistant replies as plain text; Markdown symbols
     // like ### or ** would show up literally to the user.
     "Reply in plain text only. Do NOT use Markdown syntax: no '#' heading marks,",

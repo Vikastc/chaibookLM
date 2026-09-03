@@ -36,3 +36,17 @@ export class ConflictError extends AppError {
     this.name = "ConflictError";
   }
 }
+
+export class QuotaExceededError extends AppError {
+  constructor(usage: number, limit: number) {
+    super(402, "Token quota exceeded", { usage, limit });
+    this.name = "QuotaExceededError";
+  }
+}
+
+export class ModerationError extends AppError {
+  constructor(categories: string[]) {
+    super(400, "Message flagged by content policy", { categories });
+    this.name = "ModerationError";
+  }
+}

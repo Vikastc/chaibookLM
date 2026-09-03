@@ -6,7 +6,7 @@ import QueryProvider from "@/components/providers/query-provider"
 import { Toaster } from "@/components/ui/sonner"
 
 export const metadata: Metadata = {
-  title: "chaibook",
+  title: "RAG Studio",
 }
 
 export default function RootLayout({

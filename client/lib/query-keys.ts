@@ -30,3 +30,9 @@ export const artifactKeys = {
   detail: (workspaceId: string, artifactId: string) =>
     [...artifactKeys.details(), workspaceId, artifactId] as const,
 }
+
+export const userKeys = {
+  all: ["user"] as const,
+  quota: () => [...userKeys.all, "quota"] as const,
+}
+

@@ -90,7 +90,7 @@ function SignInForm() {
         <main className="flex flex-1 items-center justify-center px-6 py-16">
           <div className="w-full max-w-80">
             <h1 className="font-heading text-2xl font-medium tracking-tight">
-              Sign in to chaibook
+              Sign in to RAG Studio
             </h1>
             <p className="mt-2 text-base leading-relaxed text-muted-foreground">
               One account for every workspace, source, and conversation.
@@ -136,12 +136,12 @@ function SignInForm() {
         </main>
 
         <footer className="flex items-center justify-between p-6 text-xs text-muted-foreground">
-          <span>© 2026 chaibook</span>
+          <span>© 2026 RAG Studio</span>
           <a
-            href="mailto:support@chaibook.app"
+            href="mailto:support@ragstudio.app"
             className="transition-colors hover:text-foreground"
           >
-            support@chaibook.app
+            support@ragstudio.app
           </a>
         </footer>
       </div>
@@ -160,7 +160,7 @@ function SignInForm() {
               Every source you feed it, one question away.
             </p>
             <p className="mt-4 max-w-sm text-base leading-relaxed text-muted-foreground">
-              Chaibook grounds every answer in the documents you upload — no
+              RAG Studio grounds every answer in the documents you upload — no
               guessing, no hallucinated citations.
             </p>
           </div>

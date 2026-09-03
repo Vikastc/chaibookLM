@@ -4,6 +4,9 @@ import { ValidationError } from "../types/errors.js";
 // TODO: Enhance this function to support multiple languages and handle cases where the transcript is not
 //      available in the default language.
 
+// ponytail: hard cap at ~1hr of video; upgrade path = chunked summarisation for longer content
+const MAX_TRANSCRIPT_CHARS = 60_000;
+
 export async function fetchYoutubeTranscript(url: string) {
   const videoId =
     url.match(
@@ -16,16 +19,22 @@ export async function fetchYoutubeTranscript(url: string) {
 
   try {
     const segments = await YoutubeTranscript.fetchTranscript(videoId);
-    const content = segments
+    const full = segments
       .map((segment) => segment.text)
       .join(" ")
       .trim();
 
-    if (!content) {
+    if (!full) {
       throw new ValidationError("No transcript found for this video");
     }
 
-    return { videoId, content };
+    if (full.length > MAX_TRANSCRIPT_CHARS) {
+      console.warn(
+        `YouTube transcript for ${videoId} truncated from ${full.length} to ${MAX_TRANSCRIPT_CHARS} chars`,
+      );
+    }
+
+    return { videoId, content: full.slice(0, MAX_TRANSCRIPT_CHARS) };
   } catch {
     throw new ValidationError(
       "Could not fetch transcript. The video may not have captions.",

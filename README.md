@@ -1,6 +1,6 @@
-# Chaibook
+# RAG Studio
 
-A NotebookLM-style AI workspace: add sources, then chat with an assistant that answers **only** from your material — with inline citations.
+An end-to-end RAG application: ingest multi-format sources (PDFs, YouTube, websites), chat with source-grounded streaming citations, and orchestrate durable background processing with Inngest.
 
 ## Features
 

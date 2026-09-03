@@ -8,7 +8,7 @@ import { formatDistanceToNow } from "date-fns"
 import { HistoryIcon, PlusIcon, SparklesIcon, Trash2Icon } from "lucide-react"
 import { toast } from "sonner"
 
-import { conversationKeys } from "@/lib/query-keys"
+import { conversationKeys, userKeys } from "@/lib/query-keys"
 import { ApiError } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { Panel, PanelHeader } from "@/components/panel"
@@ -42,7 +42,9 @@ import type { Conversation } from "../types"
 import { getConversationMessages } from "../api"
 import { ChatComposer } from "./chat-composer"
 import { ChatMessages } from "./chat-messages"
+import { QuotaBanner } from "./quota-banner"
 import { SourceDetailDialog } from "@/features/sources/components/source-detail-dialog"
+import { useUserQuota } from "@/hooks/use-user-quota"
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
@@ -66,6 +68,9 @@ export function ChatPanel({
   const invalidateLists = useCallback(() => {
     void queryClient.invalidateQueries({
       queryKey: conversationKeys.lists(workspace.id),
+    })
+    void queryClient.invalidateQueries({
+      queryKey: userKeys.quota(),
     })
   }, [queryClient, workspace.id])
 
@@ -98,12 +103,22 @@ export function ChatPanel({
   } = useChat({
     transport,
     onFinish: invalidateLists,
-    onError: (streamError) =>
+    onError: (streamError) => {
+      if (
+        streamError.message?.toLowerCase().includes("quota") ||
+        streamError.message?.includes("402")
+      ) {
+        void queryClient.invalidateQueries({
+          queryKey: userKeys.quota(),
+        })
+      }
       toast.error(
         streamError.message || "The assistant couldn't finish its reply."
-      ),
+      )
+    },
   })
 
+  const { data: userQuota } = useUserQuota()
   const conversationsQuery = useConversations(workspace.id)
   const deleteMutation = useDeleteConversation(workspace.id)
 
@@ -121,6 +136,10 @@ export function ChatPanel({
   }
 
   function handleSend(text: string) {
+    if (userQuota?.isExhausted) {
+      toast.error("You have reached your free token limit.")
+      return
+    }
     void sendMessage(
       { text },
       {
@@ -300,10 +319,13 @@ export function ChatPanel({
         </div>
       ) : null}
 
+      <QuotaBanner className="mx-4 mb-2" />
+
       <footer className="shrink-0 border-t bg-card/65 p-4 backdrop-blur-sm sm:p-5">
         <ChatComposer
           status={status}
           webSearch={webSearch}
+          disabled={userQuota?.isExhausted}
           onWebSearchChange={setWebSearch}
           onSend={handleSend}
           onStop={() => {

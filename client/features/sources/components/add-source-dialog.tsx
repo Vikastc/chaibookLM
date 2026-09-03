@@ -35,6 +35,8 @@ import {
   useImportYoutube,
   useUploadPdf,
 } from "../hooks"
+import { useUserQuota } from "@/hooks/use-user-quota"
+import { QuotaBanner } from "@/features/conversations/components/quota-banner"
 
 // Vercel Functions accept request bodies up to 4.5 MB. Leave room for
 // multipart form data so the published app has a dependable upload limit.
@@ -75,6 +77,7 @@ export function AddSourceDialog({
   onOpenChange: (open: boolean) => void
 }) {
   const [kind, setKind] = useState<SourceKind>("PDF")
+  const { data: userQuota } = useUserQuota()
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,6 +90,8 @@ export function AddSourceDialog({
             Answers in this workspace will be grounded in what you add here.
           </DialogDescription>
         </DialogHeader>
+
+        {userQuota?.isExhausted ? <QuotaBanner className="mb-1" /> : null}
 
         <div className="grid grid-cols-4 gap-2">
           {(Object.keys(KIND_META) as SourceKind[]).map((key) => {

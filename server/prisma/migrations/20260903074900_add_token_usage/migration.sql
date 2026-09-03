@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "user" ADD COLUMN "tokenUsage" INTEGER NOT NULL DEFAULT 0;

@@ -36,6 +36,8 @@ services:
       dockerfile: Dockerfile
     container_name: chaibooklm-server
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - ./server/.env
     environment:
@@ -45,6 +47,7 @@ services:
       # Point CORS allowed origin at the client container
       CLIENT_URL: http://localhost:3001
       BETTER_AUTH_URL: http://localhost:8080
+      INNGEST_BASE_URL: http://host.docker.internal:8288
     ports:
       - "8080:8080"
     depends_on:

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 type ChatComposerProps = {
   status: ChatStatus
   webSearch: boolean
+  disabled?: boolean
   onWebSearchChange: (enabled: boolean) => void
   onSend: (text: string) => void
   onStop: () => void
@@ -20,6 +21,7 @@ const MAX_TEXTAREA_HEIGHT_PX = 160
 export function ChatComposer({
   status,
   webSearch,
+  disabled = false,
   onWebSearchChange,
   onSend,
   onStop,
@@ -27,7 +29,7 @@ export function ChatComposer({
   const [value, setValue] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const busy = status === "submitted" || status === "streaming"
-  const canSend = value.trim().length > 0 && !busy
+  const canSend = value.trim().length > 0 && !busy && !disabled
 
   function autoResize() {
     const element = textareaRef.current
@@ -70,9 +72,14 @@ export function ChatComposer({
             submit()
           }
         }}
-        placeholder="Ask a question about your sources"
+        placeholder={
+          disabled
+            ? "Free token limit reached"
+            : "Ask a question about your sources"
+        }
+        disabled={disabled}
         aria-label="Message input"
-        className="max-h-40 min-h-11 resize-none bg-transparent px-3 py-2.5 text-[15px] leading-relaxed outline-none placeholder:text-muted-foreground sm:text-base"
+        className="max-h-40 min-h-11 resize-none bg-transparent px-3 py-2.5 text-[15px] leading-relaxed outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60 sm:text-base"
       />
       <div className="flex items-center justify-between gap-2 border-t px-1.5 pt-1.5">
         <Button
