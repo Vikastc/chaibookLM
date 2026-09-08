@@ -1,6 +1,13 @@
-# RAG Studio
+# 📚 RAG Studio & Ingestion Engine
 
-An end-to-end RAG application: ingest multi-format sources (PDFs, YouTube, websites), chat with source-grounded streaming citations, and orchestrate durable background processing with Inngest.
+[![Live Demo](https://img.shields.io/badge/Live_Demo-myai.vikastc.in-ff6b35?style=for-the-badge&logo=vercel)](https://myai.vikastc.in/)
+[![Portfolio](https://img.shields.io/badge/Portfolio-vikastc.in-10b981?style=for-the-badge)](https://vikastc.in/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Inngest](https://img.shields.io/badge/Inngest-Workflows-purple?style=flat-square)](https://inngest.com/)
+[![Pinecone](https://img.shields.io/badge/Pinecone-Vector_Search-blue?style=flat-square)](https://pinecone.io/)
+
+An end-to-end multimodal RAG application: ingest multi-format sources (PDFs, YouTube, websites), chat with source-grounded streaming citations, and orchestrate durable background processing with Inngest. Live at **[myai.vikastc.in](https://myai.vikastc.in/)**.
 
 ## Features
 
