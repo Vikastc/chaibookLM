@@ -4,6 +4,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import QueryProvider from "@/components/providers/query-provider"
 import { Toaster } from "@/components/ui/sonner"
+import { FeedbackButton } from "@/components/feedback-button"
 
 export const metadata: Metadata = {
   title: "RAG Studio",
@@ -29,6 +30,7 @@ export default function RootLayout({
         >
           <QueryProvider>{children}</QueryProvider>
           <Toaster />
+          <FeedbackButton />
         </ThemeProvider>
       </body>
     </html>
