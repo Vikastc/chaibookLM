@@ -1,5 +1,5 @@
 import { generateText, Output } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { CHAT_MODEL } from "../lib/aiConfig.js";
 import { checkQuota, recordTokenUsage } from "../lib/quota.js";
@@ -147,7 +147,7 @@ export async function generateArtifactContent(
     case "SUMMARY": {
       await checkQuota(userId);
       const result = await generateText({
-        model: openai(CHAT_MODEL),
+        model: anthropic(CHAT_MODEL),
         system,
         prompt: `Write a comprehensive markdown summary of the following sources:\n\n${sourceText}`,
       });
@@ -157,7 +157,7 @@ export async function generateArtifactContent(
     case "TAKEAWAYS": {
       await checkQuota(userId);
       const result = await generateText({
-        model: openai(CHAT_MODEL),
+        model: anthropic(CHAT_MODEL),
         system,
         output: Output.object({ schema: takeawaysSchema }),
         prompt: `Extract the most important key takeaways as concise bullet points from:\n\n${sourceText}`,
@@ -168,7 +168,7 @@ export async function generateArtifactContent(
     case "FLASHCARDS": {
       await checkQuota(userId);
       const result = await generateText({
-        model: openai(CHAT_MODEL),
+        model: anthropic(CHAT_MODEL),
         system,
         output: Output.object({ schema: flashcardsSchema }),
         prompt: `Create study flashcards (front/back) covering the main concepts from:\n\n${sourceText}`,
@@ -179,7 +179,7 @@ export async function generateArtifactContent(
     case "QUIZ": {
       await checkQuota(userId);
       const result = await generateText({
-        model: openai(CHAT_MODEL),
+        model: anthropic(CHAT_MODEL),
         system,
         output: Output.object({ schema: quizSchema }),
         prompt: `Create a multiple-choice quiz with explanations from:\n\n${sourceText}`,
@@ -190,7 +190,7 @@ export async function generateArtifactContent(
     case "MINDMAP": {
       await checkQuota(userId);
       const result = await generateText({
-        model: openai(CHAT_MODEL),
+        model: anthropic(CHAT_MODEL),
         system,
         output: Output.object({ schema: mindmapSchema }),
         prompt: `Create a mind map as nodes and edges. Use a central topic node and branch out logically from:\n\n${sourceText}`,
@@ -201,7 +201,7 @@ export async function generateArtifactContent(
     case "REPORT": {
       await checkQuota(userId);
       const result = await generateText({
-        model: openai(CHAT_MODEL),
+        model: anthropic(CHAT_MODEL),
         system,
         output: Output.object({ schema: reportSchema }),
         prompt: `Write a structured long-form report with sections and a full markdown version from:\n\n${sourceText}`,

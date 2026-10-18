@@ -31,8 +31,8 @@ import {
 const ICON_PRESETS = ["📚", "🧠", "💼", "🔬", "📊", "🎓", "💡", "📝"]
 
 const MODEL_HINTS: Record<ChatModel, string> = {
-  "gpt-4o-mini": "Fast, everyday",
-  "gpt-4o": "Deeper answers",
+  "claude-haiku-5-5": "Fastest, lowest cost",
+  "claude-sonnet-4-20250514": "Fast, everyday",
 }
 
 type WorkspaceDialogProps = {
@@ -74,7 +74,7 @@ export function WorkspaceDialog({
   const [description, setDescription] = useState(workspace?.description ?? "")
   const [icon, setIcon] = useState(workspace?.icon ?? "")
   const [defaultModel, setDefaultModel] = useState<ChatModel>(
-    (workspace?.defaultModel as ChatModel | null) ?? "gpt-4o-mini"
+    (workspace?.defaultModel as ChatModel | null) ?? "claude-haiku-5-5"
   )
   const [error, setError] = useState<ApiError | null>(null)
 

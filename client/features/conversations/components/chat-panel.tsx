@@ -206,7 +206,7 @@ export function ChatPanel({
         <div className="flex items-center gap-1.5">
           <Badge variant="secondary" className="hidden sm:inline-flex">
             {CHAT_MODEL_LABELS[
-              (workspace.defaultModel as ChatModel) ?? "gpt-4o-mini"
+              (workspace.defaultModel as ChatModel) ?? "claude-haiku-5-5"
             ] ?? workspace.defaultModel}
           </Badge>
           <DropdownMenu>

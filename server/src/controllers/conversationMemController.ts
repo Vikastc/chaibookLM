@@ -1,5 +1,5 @@
 import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import { CHAT_MODEL } from "../lib/aiConfig.js";
 import { addMemoriesFromMessages } from "../lib/mem0.js";
 import {
@@ -43,7 +43,7 @@ export async function summarizeConversationById(
   const previousSummary = conversation.summary?.trim();
 
   const { text: summary } = await generateText({
-    model: openai(CHAT_MODEL),
+    model: anthropic(CHAT_MODEL),
     system: [
       "You summarize chat conversations for a learning assistant.",
       "Produce a concise rolling summary covering topics discussed, questions asked,",

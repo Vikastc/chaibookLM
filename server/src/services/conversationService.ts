@@ -1,4 +1,4 @@
-import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../lib/db.js";
 import {
@@ -382,7 +382,7 @@ export async function streamWorkspaceConversation(
         : undefined;
 
       const result = streamText({
-        model: openai(chatModel),
+        model: anthropic(chatModel),
         system: systemPrompt,
         messages: await convertToModelMessages(contextMessages),
         tools,

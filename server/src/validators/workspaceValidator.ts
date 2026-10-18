@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const CHAT_MODELS = ["gpt-4o-mini", "gpt-4o"] as const;
+export const CHAT_MODELS = ["claude-haiku-5-5", "claude-sonnet-4-20250514"] as const;
 
 export const createWorkspaceSchema = z.object({
   title: z.string().trim().min(1, "Title is required").max(120),

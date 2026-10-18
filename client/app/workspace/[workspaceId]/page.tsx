@@ -238,7 +238,7 @@ function WorkspaceView({ workspaceId }: { workspaceId: string }) {
             </div>
             <Badge variant="secondary" className="hidden sm:inline-flex">
               {CHAT_MODEL_LABELS[
-                (workspace.defaultModel as ChatModel) ?? "gpt-4o-mini"
+                (workspace.defaultModel as ChatModel) ?? "claude-haiku-5-5"
               ] ?? workspace.defaultModel}
             </Badge>
           </div>

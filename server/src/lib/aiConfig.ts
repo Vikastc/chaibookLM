@@ -1,10 +1,12 @@
 /** Default chat model when the client or workspace does not specify one. */
-export const CHAT_MODEL = "gpt-4o-mini";
+export const CHAT_MODEL = "claude-haiku-5-5";
 
 /** Allowed chat models exposed to the client and workspace settings. */
-export const CHAT_MODELS = ["gpt-4o-mini", "gpt-4o"] as const;
+export const CHAT_MODELS = ["claude-haiku-5-5", "claude-sonnet-4-20250514"] as const;
 
-/** OpenAI embedding model used for RAG vector indexing and query embedding. */
+/** OpenAI embedding model used for RAG vector indexing and query embedding.
+ *  ponytail: Embeddings stay on OpenAI — Anthropic has no embedding API,
+ *  and the Pinecone index already uses text-embedding-3-small vectors. */
 export const EMBEDDING_MODEL = "text-embedding-3-small";
 
 /** Vector dimension count — must match Pinecone index configuration. */
