@@ -23,7 +23,9 @@ import { STALE_PROCESSING_MINUTES } from "../lib/aiConfig.js";
 export const processSource = inngest.createFunction(
   {
     id: "process-source",
-    retries: 3,
+    // ponytail: Zero retries on unrecoverable failures (e.g. quota/credit exhaustion,
+    // invalid keys) so UI immediately displays FAILED state instead of endless spinning.
+    retries: 0,
     triggers: [{ event: "source/created" }],
   },
   async ({ event, step }) => {
@@ -60,7 +62,12 @@ export const processSource = inngest.createFunction(
           await markSourceFailed(sourceId, error, source.metadata);
         }
       });
-      throw error;
+      // Return status FAILED so Inngest marks the run finished and doesn't retry
+      return {
+        sourceId,
+        status: "FAILED",
+        error: error instanceof Error ? error.message : "Source processing failed",
+      };
     }
   },
 );
