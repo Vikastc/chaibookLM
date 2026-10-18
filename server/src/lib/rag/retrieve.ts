@@ -18,46 +18,60 @@ export async function retrieveWorkspaceContext(
   workspaceId: string,
   query: string,
 ): Promise<RetrievedChunk[]> {
-  const [embedding] = await embedTexts([query]);
-  const matches = await queryWorkspaceVectors(
-    workspaceId,
-    embedding,
-    RAG_TOP_K,
-  );
-
-  const chunks: RetrievedChunk[] = [];
-
-  for (const match of matches) {
-    const score = match.score ?? 0;
-    if (score < RAG_MIN_SCORE) {
-      continue;
+  try {
+    const [embedding] = await embedTexts([query]);
+    if (!embedding) {
+      return [];
     }
 
-    const metadata = match.metadata as Record<string, unknown> | undefined;
-    if (
-      !metadata ||
-      typeof metadata.sourceId !== "string" ||
-      typeof metadata.sourceTitle !== "string" ||
-      typeof metadata.sourceType !== "string" ||
-      typeof metadata.chunkId !== "string" ||
-      typeof metadata.text !== "string"
-    ) {
-      continue;
+    const matches = await queryWorkspaceVectors(
+      workspaceId,
+      embedding,
+      RAG_TOP_K,
+    );
+
+    const chunks: RetrievedChunk[] = [];
+
+    for (const match of matches) {
+      const score = match.score ?? 0;
+      if (score < RAG_MIN_SCORE) {
+        continue;
+      }
+
+      const metadata = match.metadata as Record<string, unknown> | undefined;
+      if (
+        !metadata ||
+        typeof metadata.sourceId !== "string" ||
+        typeof metadata.sourceTitle !== "string" ||
+        typeof metadata.sourceType !== "string" ||
+        typeof metadata.chunkId !== "string" ||
+        typeof metadata.text !== "string"
+      ) {
+        continue;
+      }
+
+      chunks.push({
+        sourceId: metadata.sourceId,
+        sourceTitle: metadata.sourceTitle,
+        sourceType: metadata.sourceType,
+        chunkId: metadata.chunkId,
+        chunkIndex: Number(metadata.chunkIndex ?? 0),
+        ...(typeof metadata.page === "number" ? { page: metadata.page } : {}),
+        text: metadata.text,
+        score,
+      });
     }
 
-    chunks.push({
-      sourceId: metadata.sourceId,
-      sourceTitle: metadata.sourceTitle,
-      sourceType: metadata.sourceType,
-      chunkId: metadata.chunkId,
-      chunkIndex: Number(metadata.chunkIndex ?? 0),
-      ...(typeof metadata.page === "number" ? { page: metadata.page } : {}),
-      text: metadata.text,
-      score,
-    });
+    return chunks;
+  } catch (error) {
+    // ponytail: Fall back gracefully to workspace source overview if OpenAI embeddings
+    // fail (e.g. quota/credit exhaustion or network issue). Allows chat to continue working.
+    console.warn(
+      "RAG vector retrieval failed; falling back to workspace source overview:",
+      error instanceof Error ? error.message : error,
+    );
+    return [];
   }
-
-  return chunks;
 }
 
 export type UserMemoryContext = string;
@@ -71,7 +85,7 @@ export type SourceOverviewItem = {
   snippet: string;
 };
 
-const SOURCE_OVERVIEW_SNIPPET_CHARS = 400;
+const SOURCE_OVERVIEW_SNIPPET_CHARS = 1500;
 const SOURCE_OVERVIEW_MAX_SOURCES = 10;
 
 /**
